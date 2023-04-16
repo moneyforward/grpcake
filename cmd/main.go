@@ -3,9 +3,11 @@ package main
 import (
 	"context"
 	"errors"
+	"flag"
 	"fmt"
 	"log"
 	"strings"
+	"time"
 
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/golang/protobuf/proto"
@@ -16,19 +18,50 @@ import (
 	"google.golang.org/grpc"
 )
 
+const (
+	DefaultTimeout = 15 * time.Second
+)
+
 func main() {
-	grpcClient, err := NewGrpcClientFromProtoFile("localhost:8080", "cmd/adder.proto")
+	url := flag.String("url", "", "GRPC Server URL")
+	grpcMethod := flag.String("grpc-method", "", "GRPC Method")
+	importFileName := flag.String("import", "", "Proto files to import")
+	jsonBody := flag.String("body", "{}", "JSON body")
+
+	flag.Parse()
+	if *url == "" || *grpcMethod == "" {
+		log.Fatalf("error url or grpc method is not passed")
+	}
+
+	globalCtx := context.Background()
+	grpcClient, err := NewGrpcClientFromProtoFile(*url, *importFileName)
 	if err != nil {
 		log.Fatalf("error creating grpc client: %v", err)
 	}
 
-	resMsg, err := grpcClient.Send(context.Background(), "api.Adder", "Add", `{"x": 1, "y": 2}`)
+	timeoutCtx, cancel := context.WithTimeout(globalCtx, DefaultTimeout)
+	defer cancel()
+
+	parts := strings.SplitN(*grpcMethod, "/", 2)
+	if len(parts) != 2 {
+		log.Fatalf("error invalid grpc method name")
+	}
+
+	serviceName := parts[0]
+	methodName := parts[1]
+
+	resMsg, err := grpcClient.Send(timeoutCtx, serviceName, methodName, *jsonBody)
 	if err != nil {
 		log.Fatalf("error sending grpc request: %v", err)
 	}
 
 	marshaler := jsonpb.Marshaler{}
-	log.Println(marshaler.MarshalToString(resMsg))
+	resMsgJson, err := marshaler.MarshalToString(resMsg)
+	if err != nil {
+		log.Fatalf("error printing response message as JSON: %v", err)
+	}
+
+	log.Println(resMsgJson)
 }
 
 type GrpcClient struct {
@@ -37,6 +70,7 @@ type GrpcClient struct {
 	client   grpcdynamic.Stub
 }
 
+// TODO: support importing multiple files
 func NewGrpcClientFromProtoFile(url string, fileName string) (*GrpcClient, error) {
 	// TODO: allow more options
 	conn, err := grpc.Dial(url, grpc.WithInsecure())
