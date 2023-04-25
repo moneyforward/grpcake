@@ -2,7 +2,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             (unknown)
-// source: example.proto
+// source: internal/testing/example.proto
 
 package testing
 
@@ -357,5 +357,5 @@ var ExampleService_ServiceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 	},
-	Metadata: "example.proto",
+	Metadata: "internal/testing/example.proto",
 }

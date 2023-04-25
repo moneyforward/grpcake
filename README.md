@@ -37,5 +37,5 @@ make run-test-server
 ### To regenerate `example.proto` files in `internal/testing` folder
 
  ```sh
- bin/buf generate --template testing/buf.gen.yaml;
+ bin/buf generate --template internal/testing/buf.gen.yaml;
  ```
