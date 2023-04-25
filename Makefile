@@ -21,7 +21,7 @@ vet: fmt
 .PHONY:vet
 
 build: vet
-	go build -o bin/climer .
+	go build -o bin/grpcake cmd/main.go 
 .PHONY:build
 
 run-test-server:
