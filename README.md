@@ -1,14 +1,30 @@
 # grpcake
 
 ```sh
-➜  grpcake git:(main) ✗ go run cmd/main.go --url localhost:8080 --grpc-method api.Adder/Add --import cmd/adder.proto x:=1 y:=2
-
-2023/04/16 22:15:20 request json body: %s {"x":1,"y":2}
-2023/04/16 22:15:20 {"result":3}
+➜  grpcake git:(main) ✗ go run cmd/main.go --url localhost:6069 --grpc-method testing.ExampleService/UnaryExample --import internal/testing/example.proto long_field:=10 int_field:=1 float_field:=1.5 double_field:=2.5 bool_field:=true string_field="hello world" bytes_field="b25lcGllY2VraW5kYXN1Y2sK"
+2023/04/25 12:46:00 request json body: %s {"long_field":10,"int_field":1,"float_field":1.5,"double_field":2.5,"bool_field":true,"string_field":"hello world","bytes_field":"b25lcGllY2VraW5kYXN1Y2sK"}
+2023/04/25 12:46:00 Response:  {
+        "intField": 1,
+        "longField": "10",
+        "floatField": 1.5,
+        "doubleField": 2.5,
+        "boolField": true,
+        "stringField": "hello world",
+        "bytesField": "b25lcGllY2VraW5kYXN1Y2sK"
+}
 ```
+
+## To run example server
 
 ```sh
-➜  grpcake git:(main) ✗ go run cmd/main.go --url localhost:8080 --grpc-method api.Adder/Add --import cmd/adder.proto --body '{"x": 1, "y": 2}'                         
-2023/04/16 22:21:28 request json body: %s {"x": 1, "y": 2}
-2023/04/16 22:21:28 {"result":3}
+make run-test-server
 ```
+
+## To regenerate `example.proto` files in `internal/testing` folder
+
+1. Install `buf` with `brew install bufbuild/buf/buf`.
+2. Change directory to `internal/testing` and call `buf generate`.
+
+    ```sh
+    cd internal/testing && buf generate;
+    ```
