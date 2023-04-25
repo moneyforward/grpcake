@@ -36,7 +36,7 @@ func main() {
 		jsonBody = &jsonString
 	}
 
-	log.Println("request json body: %s", *jsonBody)
+	log.Printf("request json body: %s", *jsonBody)
 
 	if *url == "" || *grpcMethod == "" {
 		log.Fatalf("error url or grpc method is not passed")
