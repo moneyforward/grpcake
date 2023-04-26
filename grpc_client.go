@@ -6,13 +6,16 @@ import (
 	"fmt"
 	"strings"
 
+	// nolint SA1019
 	"github.com/golang/protobuf/jsonpb"
+	// nolint SA1019
 	"github.com/golang/protobuf/proto"
 	"github.com/jhump/protoreflect/desc"
 	"github.com/jhump/protoreflect/desc/protoparse"
 	"github.com/jhump/protoreflect/dynamic"
 	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
 )
 
 // GrpcClient invokes grpc method on a remote server dynamically, without the need for
@@ -26,7 +29,7 @@ type GrpcClient struct {
 // TODO: support importing multiple files
 func NewGrpcClientFromProtoFile(url string, fileName string) (*GrpcClient, error) {
 	// TODO: allow more options
-	conn, err := grpc.Dial(url, grpc.WithInsecure())
+	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to grpc server: %v", err)
 	}
