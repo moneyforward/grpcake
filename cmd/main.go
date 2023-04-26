@@ -8,6 +8,7 @@ import (
 	"strings"
 	"time"
 
+	// nolint SA1019
 	"github.com/golang/protobuf/jsonpb"
 	"github.com/tidwall/sjson"
 
