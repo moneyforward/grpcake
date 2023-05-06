@@ -3,15 +3,17 @@ package grpcake
 import (
 	"context"
 	"fmt"
+
 	"github.com/bufbuild/protocompile"
 	"github.com/bufbuild/protocompile/linker"
-	"github.com/moneyforward/grpcake/internal/grpcdynamic"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
 	"google.golang.org/protobuf/types/dynamicpb"
+
+	"github.com/moneyforward/grpcake/internal/grpcdynamic"
 )
 
 // GrpcClient invokes grpc method on a remote server dynamically, without the need for
@@ -30,7 +32,7 @@ func NewGrpcClientFromProtoFile(url string, fileNames []string) (*GrpcClient, er
 	client := grpcdynamic.NewStub(conn)
 
 	compiler := protocompile.Compiler{
-		Resolver: &protocompile.SourceResolver{},
+		Resolver: protocompile.WithStandardImports(&protocompile.SourceResolver{}),
 	}
 
 	files, err := compiler.Compile(context.Background(), fileNames...)

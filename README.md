@@ -2,7 +2,7 @@
 
 ```sh
 ➜  grpcake git:(main) ✗ go run cmd/main.go --url localhost:6069 \
-   --grpc-method testing.ExampleService/UnaryExample \
+   --grpc-method ExampleService/UnaryExample \
    --import internal/testing/example.proto \
    long_field:=10 int_field:=1 float_field:=1.5 double_field:=2.5 bool_field:=true \
    string_field="hello world" bytes_field="b25lcGllY2VraW5kYXN1Y2sK"
