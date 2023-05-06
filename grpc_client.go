@@ -23,7 +23,7 @@ type GrpcClient struct {
 	client          grpcdynamic.Stub
 }
 
-func NewGrpcClientFromProtoFile(url string, fileNames []string) (*GrpcClient, error) {
+func NewGrpcClientFromProtoFiles(url string, fileNames []string) (*GrpcClient, error) {
 	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to grpc server: %v", err)

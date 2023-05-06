@@ -43,7 +43,7 @@ func main() {
 	}
 
 	globalCtx := context.Background()
-	grpcClient, err := grpcake.NewGrpcClientFromProtoFile(*url, strings.Split(*importFileNames, " "))
+	grpcClient, err := grpcake.NewGrpcClientFromProtoFiles(*url, strings.Split(*importFileNames, " "))
 	if err != nil {
 		log.Fatalf("error creating grpc client: %v", err)
 	}

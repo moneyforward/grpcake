@@ -51,10 +51,13 @@ func checkMessageType(md protoreflect.MessageDescriptor, msg proto.Message) erro
 	return nil
 }
 
+// requestMethod generate method name string for invoking rpc methods.
 func requestMethod(md protoreflect.MethodDescriptor) string {
 	return fmt.Sprintf("/%s/%s", md.Parent().FullName(), md.Name())
 }
 
+// methodType returns a string to specify whether a method
+// is unary, client streaming, server streaming or bidirectional streaming.
 func methodType(md protoreflect.MethodDescriptor) string {
 	if md.IsStreamingClient() && md.IsStreamingServer() {
 		return "bidi-streaming"
