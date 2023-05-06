@@ -22,7 +22,7 @@ const (
 func main() {
 	url := flag.String("url", "", "GRPC Server URL")
 	grpcMethod := flag.String("grpc-method", "", "GRPC Method")
-	importFileName := flag.String("import", "", "Proto files to import")
+	importFileNames := flag.String("import", "", "Proto files to import")
 	jsonBody := flag.String("body", "", "JSON body")
 
 	flag.Parse()
@@ -43,7 +43,7 @@ func main() {
 	}
 
 	globalCtx := context.Background()
-	grpcClient, err := grpcake.NewGrpcClientFromProtoFile(*url, []string{*importFileName})
+	grpcClient, err := grpcake.NewGrpcClientFromProtoFile(*url, strings.Split(*importFileNames, " "))
 	if err != nil {
 		log.Fatalf("error creating grpc client: %v", err)
 	}
