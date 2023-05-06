@@ -3,11 +3,11 @@ package grpcake
 import (
 	"context"
 	"fmt"
-
 	"github.com/bufbuild/protocompile"
 	"github.com/bufbuild/protocompile/linker"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -44,7 +44,7 @@ func NewGrpcClientFromProtoFiles(url string, fileNames []string) (*GrpcClient, e
 }
 
 // Send ...
-func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody string) (proto.Message, error) {
+func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody string, rawHeaders map[string]string, opts ...grpc.CallOption) (proto.Message, error) {
 	serviceDescriptor := getServiceDescriptorByName(g.fileDescriptors, serviceName)
 	if serviceDescriptor == nil {
 		return nil, fmt.Errorf("error finding service with name %s", serviceName)
@@ -62,7 +62,10 @@ func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody
 		return nil, fmt.Errorf("error unmarshalling json body to protobuf message: %v", err)
 	}
 
-	resMsg, err := g.client.InvokeRpc(context.Background(), methodDescriptor, reqMsg)
+	headers := metadata.New(rawHeaders)
+	outgoingCtx := metadata.NewOutgoingContext(ctx, headers)
+
+	resMsg, err := g.client.InvokeRpc(outgoingCtx, methodDescriptor, reqMsg, opts...)
 	if err != nil {
 		return nil, fmt.Errorf("error sending grpc request: %v", err)
 	}

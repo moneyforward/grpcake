@@ -27,14 +27,16 @@ func main() {
 
 	flag.Parse()
 
-	if *jsonBody == "" {
-		jsonString, err := parseJsonFieldArg(flag.Args())
-		if err != nil {
-			log.Fatalf("error parsing json field arguments: %v", err)
-		}
-
-		jsonBody = &jsonString
+	parseResult, err := parseArguments(flag.Args())
+	if err != nil {
+		log.Fatalf("error parsing json field arguments: %v", err)
 	}
+
+	if *jsonBody == "" {
+		jsonBody = &parseResult.JsonString
+	}
+
+	log.Println(parseResult)
 
 	log.Printf("request json body: %s", *jsonBody)
 
@@ -59,7 +61,7 @@ func main() {
 	serviceName := parts[0]
 	methodName := parts[1]
 
-	resMsg, err := grpcClient.Send(timeoutCtx, serviceName, methodName, *jsonBody)
+	resMsg, err := grpcClient.Send(timeoutCtx, serviceName, methodName, *jsonBody, parseResult.Headers)
 	if err != nil {
 		log.Fatalf("error sending grpc request: %v", err)
 	}
@@ -76,32 +78,45 @@ func main() {
 	log.Println("Response:", prettifiedJson)
 }
 
-// parseJsonFieldArg Parse JSON field arguments into a json string.
+// parseArguments Parse JSON field arguments into a json string.
 // take a look at this case "e f:"=a will be parsed as e f:=a
-func parseJsonFieldArg(args []string) (jsonString string, err error) {
-	jsonString = "{}"
+func parseArguments(args []string) (parseResult ParseResult, err error) {
+	parseResult = ParseResult{
+		JsonString: "{}",
+		Headers:    map[string]string{},
+	}
 
 	var parts []string
 	for _, arg := range args {
 		parts = strings.SplitN(arg, ":=", 2)
 		if len(parts) == 2 {
-			jsonString, err = sjson.SetRaw(jsonString, parts[0], parts[1])
+			parseResult.JsonString, err = sjson.SetRaw(parseResult.JsonString, parts[0], parts[1])
 			if err != nil {
-				return "", fmt.Errorf("error setting raw key value for json (%v, %v): %v", parts[0], parts[1], err)
+				return parseResult, fmt.Errorf("error setting raw key value for json (%v, %v): %v", parts[0], parts[1], err)
 			}
 			continue
 		}
 
 		parts = strings.SplitN(arg, "=", 2)
-		if len(parts) < 2 {
-			return "", fmt.Errorf("error invalid format for arg '%v'", arg)
+		if len(parts) == 2 {
+			parseResult.JsonString, err = sjson.Set(parseResult.JsonString, parts[0], parts[1])
+			if err != nil {
+				return parseResult, fmt.Errorf("error setting key value for json (%v, %v): %v", parts[0], parts[1], err)
+			}
+			continue
 		}
 
-		jsonString, err = sjson.Set(jsonString, parts[0], parts[1])
-		if err != nil {
-			return "", fmt.Errorf("error setting key value for json (%v, %v): %v", parts[0], parts[1], err)
+		parts = strings.SplitN(arg, ":", 2)
+		if len(parts) < 2 {
+			return parseResult, fmt.Errorf("error wrong argument format")
 		}
+		parseResult.Headers[parts[0]] = parts[1]
 	}
 
-	return jsonString, nil
+	return parseResult, nil
+}
+
+type ParseResult struct {
+	JsonString string
+	Headers    map[string]string
 }
