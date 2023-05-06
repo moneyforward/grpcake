@@ -2,33 +2,26 @@ package grpcake
 
 import (
 	"context"
-	"errors"
 	"fmt"
-	"strings"
-
-	// nolint SA1019
-	"github.com/golang/protobuf/jsonpb"
-	// nolint SA1019
-	"github.com/golang/protobuf/proto"
-	"github.com/jhump/protoreflect/desc"
-	"github.com/jhump/protoreflect/desc/protoparse"
-	"github.com/jhump/protoreflect/dynamic"
-	"github.com/jhump/protoreflect/dynamic/grpcdynamic"
+	"github.com/bufbuild/protocompile"
+	"github.com/bufbuild/protocompile/linker"
+	"github.com/moneyforward/grpcake/internal/grpcdynamic"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 // GrpcClient invokes grpc method on a remote server dynamically, without the need for
 // protobuf code generation.
 type GrpcClient struct {
-	fileDesc *desc.FileDescriptor
-	conn     *grpc.ClientConn
-	client   grpcdynamic.Stub
+	fileDescriptors linker.Files
+	client          grpcdynamic.Stub
 }
 
-// TODO: support importing multiple files
-func NewGrpcClientFromProtoFile(url string, fileName string) (*GrpcClient, error) {
-	// TODO: allow more options
+func NewGrpcClientFromProtoFile(url string, fileNames []string) (*GrpcClient, error) {
 	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to grpc server: %v", err)
@@ -36,52 +29,55 @@ func NewGrpcClientFromProtoFile(url string, fileName string) (*GrpcClient, error
 
 	client := grpcdynamic.NewStub(conn)
 
-	parser := protoparse.Parser{}
-	fileDescriptors, err := parser.ParseFiles(fileName)
+	compiler := protocompile.Compiler{
+		Resolver: &protocompile.SourceResolver{},
+	}
+
+	files, err := compiler.Compile(context.Background(), fileNames...)
 	if err != nil {
-		return nil, fmt.Errorf("error parsing proto file: %v", err)
+		return nil, err
 	}
 
-	if len(fileDescriptors) == 0 {
-		return nil, fmt.Errorf("error no files found: %v", err)
-	}
-
-	return &GrpcClient{
-		fileDesc: fileDescriptors[0],
-		conn:     conn,
-		client:   client,
-	}, nil
+	return &GrpcClient{fileDescriptors: files, client: client}, nil
 }
 
 // Send ...
 func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody string) (proto.Message, error) {
-	serviceDesc := g.fileDesc.FindService(serviceName)
-	if serviceDesc == nil {
-		return nil, fmt.Errorf("error service '%v' not found", serviceName)
+	serviceDescriptor := getServiceDescriptorByName(g.fileDescriptors, serviceName)
+	if serviceDescriptor == nil {
+		return nil, fmt.Errorf("error finding service with name %s", serviceName)
 	}
 
-	methodDesc := serviceDesc.FindMethodByName(methodName)
-	if methodDesc == nil {
-		return nil, fmt.Errorf("error method '%v' not found in service '%v'", methodName, serviceName)
+	methodDescriptor := serviceDescriptor.Methods().ByName(protoreflect.Name(methodName))
+	if methodDescriptor == nil {
+		return nil, fmt.Errorf("error finding method with name %s", methodName)
 	}
 
-	// create request protobuf message
-	reqMsgDesc := methodDesc.GetInputType()
-	if reqMsgDesc == nil {
-		return nil, errors.New("todo")
-	}
-	reqMsg := dynamic.NewMessage(reqMsgDesc)
+	reqMsg := dynamicpb.NewMessage(methodDescriptor.Input())
 
-	// send grpc request
-	err := jsonpb.Unmarshal(strings.NewReader(jsonBody), reqMsg)
+	err := protojson.Unmarshal([]byte(jsonBody), reqMsg)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling json body to protobuf message: %v", err)
 	}
 
-	resMsg, err := g.client.InvokeRpc(context.Background(), methodDesc, reqMsg)
+	resMsg, err := g.client.InvokeRpc(context.Background(), methodDescriptor, reqMsg)
 	if err != nil {
 		return nil, fmt.Errorf("error sending grpc request: %v", err)
 	}
 
 	return resMsg, nil
+}
+
+func getServiceDescriptorByName(fileDescriptors linker.Files, serviceName string) protoreflect.ServiceDescriptor {
+	var serviceDescriptor protoreflect.ServiceDescriptor
+
+	for _, descriptor := range fileDescriptors {
+		serviceDescriptor = descriptor.Services().ByName(protoreflect.Name(serviceName))
+
+		if serviceDescriptor != nil {
+			return serviceDescriptor
+		}
+	}
+
+	return nil
 }
