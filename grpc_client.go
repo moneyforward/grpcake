@@ -23,6 +23,7 @@ type GrpcClient struct {
 	client          grpcdynamic.Stub
 }
 
+// NewGrpcClientFromProtoFiles ...
 func NewGrpcClientFromProtoFiles(url string, fileNames []string) (*GrpcClient, error) {
 	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
@@ -45,7 +46,7 @@ func NewGrpcClientFromProtoFiles(url string, fileNames []string) (*GrpcClient, e
 
 // Send ...
 func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody string) (proto.Message, error) {
-	serviceDescriptor := getServiceDescriptorByName(g.fileDescriptors, serviceName)
+	serviceDescriptor := getServiceDescriptorByFqnName(g.fileDescriptors, protoreflect.FullName(serviceName))
 	if serviceDescriptor == nil {
 		return nil, fmt.Errorf("error finding service with name %s", serviceName)
 	}
@@ -70,14 +71,15 @@ func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody
 	return resMsg, nil
 }
 
-func getServiceDescriptorByName(fileDescriptors linker.Files, serviceName string) protoreflect.ServiceDescriptor {
-	var serviceDescriptor protoreflect.ServiceDescriptor
-
+// getServiceDescriptorByFqnName ...
+func getServiceDescriptorByFqnName(fileDescriptors linker.Files, serviceName protoreflect.FullName) protoreflect.ServiceDescriptor {
 	for _, descriptor := range fileDescriptors {
-		serviceDescriptor = descriptor.Services().ByName(protoreflect.Name(serviceName))
-
-		if serviceDescriptor != nil {
-			return serviceDescriptor
+		svcDescriptors := descriptor.Services()
+		for i := 0; i < svcDescriptors.Len(); i++ {
+			serviceDescriptor := svcDescriptors.Get(i)
+			if serviceDescriptor.FullName() == serviceName {
+				return serviceDescriptor
+			}
 		}
 	}
 
