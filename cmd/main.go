@@ -22,7 +22,7 @@ const (
 func main() {
 	url := flag.String("url", "", "GRPC Server URL")
 	grpcMethod := flag.String("grpc-method", "", "GRPC Method")
-	importFileNames := flag.String("import", "", "Proto files to import")
+	importFileName := flag.String("import", "", "Proto files to import")
 	jsonBody := flag.String("body", "", "JSON body")
 
 	flag.Parse()
@@ -43,7 +43,8 @@ func main() {
 	}
 
 	globalCtx := context.Background()
-	grpcClient, err := grpcake.NewGrpcClientFromProtoFiles(*url, strings.Split(*importFileNames, " "))
+	// NOTE: I'm going to add support for importing multiple files in another PR.
+	grpcClient, err := grpcake.NewGrpcClientFromProtoFiles(*url, []string{*importFileName})
 	if err != nil {
 		log.Fatalf("error creating grpc client: %v", err)
 	}
