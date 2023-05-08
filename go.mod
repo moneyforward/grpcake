@@ -4,9 +4,8 @@ go 1.20
 
 require (
 	github.com/bufbuild/buf v1.17.0
-	github.com/golang/protobuf v1.5.3
+	github.com/bufbuild/protocompile v0.5.1
 	github.com/golangci/golangci-lint v1.52.2
-	github.com/jhump/protoreflect v1.15.1
 	github.com/tidwall/sjson v1.2.5
 	google.golang.org/grpc v1.46.2
 	google.golang.org/protobuf v1.30.0
@@ -36,7 +35,6 @@ require (
 	github.com/breml/bidichk v0.2.4 // indirect
 	github.com/breml/errchkjson v0.3.1 // indirect
 	github.com/bufbuild/connect-go v1.6.0 // indirect
-	github.com/bufbuild/protocompile v0.5.1 // indirect
 	github.com/butuzov/ireturn v0.1.1 // indirect
 	github.com/cespare/xxhash/v2 v2.1.2 // indirect
 	github.com/charithe/durationcheck v0.0.10 // indirect
@@ -76,6 +74,7 @@ require (
 	github.com/gofrs/flock v0.8.1 // indirect
 	github.com/gofrs/uuid/v5 v5.0.0 // indirect
 	github.com/gogo/protobuf v1.3.2 // indirect
+	github.com/golang/protobuf v1.5.3 // indirect
 	github.com/golangci/check v0.0.0-20180506172741-cfe4005ccda2 // indirect
 	github.com/golangci/dupl v0.0.0-20180902072040-3e9179ac440a // indirect
 	github.com/golangci/go-misc v0.0.0-20220329215616-d24fe342adfe // indirect

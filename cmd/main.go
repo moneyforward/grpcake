@@ -8,9 +8,8 @@ import (
 	"strings"
 	"time"
 
-	// nolint SA1019
-	"github.com/golang/protobuf/jsonpb"
 	"github.com/tidwall/sjson"
+	"google.golang.org/protobuf/encoding/protojson"
 
 	"github.com/moneyforward/grpcake"
 )
@@ -44,7 +43,8 @@ func main() {
 	}
 
 	globalCtx := context.Background()
-	grpcClient, err := grpcake.NewGrpcClientFromProtoFile(*url, *importFileName)
+	// NOTE: I'm going to add support for importing multiple files in another PR.
+	grpcClient, err := grpcake.NewGrpcClientFromProtoFiles(*url, []string{*importFileName})
 	if err != nil {
 		log.Fatalf("error creating grpc client: %v", err)
 	}
@@ -65,8 +65,7 @@ func main() {
 		log.Fatalf("error sending grpc request: %v", err)
 	}
 
-	marshaler := jsonpb.Marshaler{}
-	resMsgJson, err := marshaler.MarshalToString(resMsg)
+	resMsgJson, err := protojson.Marshal(resMsg)
 	if err != nil {
 		log.Fatalf("error printing response message as JSON: %v", err)
 	}
