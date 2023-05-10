@@ -4,6 +4,9 @@ SHELL  = /bin/bash
 export GOBIN := $(PWD)/bin
 export PATH  := $(GOBIN):$(PATH)
 
+# Whether to run test server with reflection or not
+REFLECT?=false
+
 install-tools:
 	awk '/_ ".+"/ {print $$2}' $(PWD)/tools/tools.go | xargs go install
 .PHONY:install-tools
@@ -25,5 +28,5 @@ build: vet
 .PHONY:build
 
 run-test-server:
-	go run internal/testing/cmd/testserver/main.go
+	go run internal/testing/cmd/testserver/main.go -reflection=$(REFLECT)
 

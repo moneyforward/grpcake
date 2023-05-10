@@ -20,15 +20,18 @@ const (
 
 // TODO: write tests
 func main() {
-	url := flag.String("url", "", "GRPC Server URL")
-	grpcMethod := flag.String("grpc-method", "", "GRPC Method")
-	importFileName := flag.String("import", "", "Proto files to import")
-	jsonBody := flag.String("body", "", "JSON body")
+	var (
+		url            = flag.String("url", "", "GRPC Server URL")
+		reflection     = flag.Bool("reflection", true, "Try to use server reflection")
+		grpcMethod     = flag.String("grpc-method", "", "GRPC Method")
+		importFileName = flag.String("import", "", "Proto files to import")
+		jsonBody       = flag.String("body", "", "JSON body")
+	)
 
 	flag.Parse()
 
 	if *jsonBody == "" {
-		jsonString, err := parseJsonFieldArg(flag.Args())
+		jsonString, err := parseJSONFieldArg(flag.Args())
 		if err != nil {
 			log.Fatalf("error parsing json field arguments: %v", err)
 		}
@@ -43,8 +46,13 @@ func main() {
 	}
 
 	globalCtx := context.Background()
+
 	// NOTE: I'm going to add support for importing multiple files in another PR.
 	grpcClient, err := grpcake.NewGrpcClientFromProtoFiles(*url, []string{*importFileName})
+	if *reflection {
+		grpcClient, err = grpcake.NewGrpcClientFromReflectingServer(*url)
+	}
+
 	if err != nil {
 		log.Fatalf("error creating grpc client: %v", err)
 	}
@@ -65,21 +73,21 @@ func main() {
 		log.Fatalf("error sending grpc request: %v", err)
 	}
 
-	resMsgJson, err := protojson.Marshal(resMsg)
+	resMsgJSON, err := protojson.Marshal(resMsg)
 	if err != nil {
 		log.Fatalf("error printing response message as JSON: %v", err)
 	}
 
-	prettifiedJson, err := grpcake.JsonPrettify(resMsgJson)
+	prettiedJSON, err := grpcake.JSONPrettify(resMsgJSON)
 	if err != nil {
 		log.Fatalf("error prettify-ing response json: %v", err)
 	}
-	log.Println("Response:", prettifiedJson)
+	log.Println("Response:", prettiedJSON)
 }
 
-// parseJsonFieldArg Parse JSON field arguments into a json string.
+// parseJSONFieldArg Parse JSON field arguments into a json string.
 // take a look at this case "e f:"=a will be parsed as e f:=a
-func parseJsonFieldArg(args []string) (jsonString string, err error) {
+func parseJSONFieldArg(args []string) (jsonString string, err error) {
 	jsonString = "{}"
 
 	var parts []string
