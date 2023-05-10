@@ -1,8 +1,7 @@
 # grpcake
 
-A deliciously simple gRPC client a la [pie](https://github.com/httpie/httpie) for written in go.
-`grpcake` allows you test your gRPC client from the command line without stressing about writing 
-correct raw json strings.
+A deliciously simple gRPC client written in go, `grpcake` allows you test your gRPC 
+client from the command line without stressing about writing correct raw json strings.
 
 ## Usage 
 
