@@ -8,13 +8,13 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
-	"google.golang.org/grpc/reflection"
+	grpcreflect "google.golang.org/grpc/reflection"
 
 	testingpb "github.com/moneyforward/grpcake/internal/testing"
 )
 
 func main() {
-	withReflection := flag.Bool("reflection", false, "Run server with reflection support")
+	reflection := flag.Bool("use-reflection", false, "Run server with reflection support")
 	port := 6069
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
 	if err != nil {
@@ -26,9 +26,9 @@ func main() {
 
 	flag.Parse()
 
-	if *withReflection {
+	if *reflection {
 		// Register reflection service on gRPC server.
-		reflection.Register(grpcServer)
+		grpcreflect.Register(grpcServer)
 	}
 
 	log.Printf("Service is running on localhost:%d", port)

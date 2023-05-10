@@ -23,11 +23,8 @@ type GrpcClient struct {
 	client           grpcdynamic.Stub
 }
 
-// NewGrpcClientFromProtoFiles ...
-func NewGrpcClientFromProtoFiles(url string, fileNames []string) (*GrpcClient, error) {
-
-	ctx := context.Background()
-
+// NewGrpcClient ...
+func NewGrpcClient(ctx context.Context, url string, reflection bool, fileNames []string) (*GrpcClient, error) {
 	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to grpc server: %v", err)
@@ -35,27 +32,28 @@ func NewGrpcClientFromProtoFiles(url string, fileNames []string) (*GrpcClient, e
 
 	client := grpcdynamic.NewStub(conn)
 
-	fileSource, err := DescriptorSourceFromProtoFiles(ctx, fileNames...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to process proto source files: %s", err)
+	var fileSource DescriptorSource
+	var reflSource DescriptorSource
+	var descSource DescriptorSource
+
+	if len(fileNames) > 0 {
+		fileSource, err = DescriptorSourceFromProtoFiles(ctx, fileNames...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to process proto source files: %s", err)
+		}
+	}
+	if reflection {
+		refClient := grpcreflect.NewClientV1Alpha(ctx, reflectpb.NewServerReflectionClient(conn))
+		reflSource = DescriptorSourceFromServer(ctx, refClient)
+		descSource = reflSource
+		if fileSource != nil {
+			descSource = compositeSource{reflSource, fileSource}
+		}
+	} else {
+		descSource = fileSource
 	}
 
-	return &GrpcClient{descriptorSource: fileSource, client: client}, nil
-}
-
-func NewGrpcClientFromReflectingServer(url string) (*GrpcClient, error) {
-	ctx := context.Background()
-
-	// TODO: remove code duplication
-	cc, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to grpc server: %v", err)
-	}
-	client := grpcdynamic.NewStub(cc)
-
-	refClient := grpcreflect.NewClientV1Alpha(ctx, reflectpb.NewServerReflectionClient(cc))
-	reflSource := DescriptorSourceFromServer(ctx, refClient)
-	return &GrpcClient{descriptorSource: reflSource, client: client}, nil
+	return &GrpcClient{descriptorSource: descSource, client: client}, nil
 }
 
 // Send ...

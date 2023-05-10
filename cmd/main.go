@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -22,7 +23,7 @@ const (
 func main() {
 	var (
 		url            = flag.String("url", "", "GRPC Server URL")
-		reflection     = flag.Bool("reflection", true, "Try to use server reflection")
+		reflection     = flag.Bool("use-reflection", true, "Try to use server reflection")
 		grpcMethod     = flag.String("grpc-method", "", "GRPC Method")
 		importFileName = flag.String("import", "", "Proto files to import")
 		jsonBody       = flag.String("body", "", "JSON body")
@@ -33,7 +34,7 @@ func main() {
 	if *jsonBody == "" {
 		jsonString, err := parseJSONFieldArg(flag.Args())
 		if err != nil {
-			log.Fatalf("error parsing json field arguments: %v", err)
+			fail(err, "error parsing json field arguments")
 		}
 
 		jsonBody = &jsonString
@@ -42,17 +43,22 @@ func main() {
 	log.Printf("request json body: %s", *jsonBody)
 
 	if *url == "" || *grpcMethod == "" {
-		log.Fatalf("error url or grpc method is not passed")
+		fail(nil, "error url or grpc method is not passed")
+	}
+
+	if !*reflection && *importFileName == "" {
+		fail(nil, "No protoset files or proto files specified and -use-reflection set to false.")
 	}
 
 	globalCtx := context.Background()
 
-	// NOTE: I'm going to add support for importing multiple files in another PR.
-	grpcClient, err := grpcake.NewGrpcClientFromProtoFiles(*url, []string{*importFileName})
-	if *reflection {
-		grpcClient, err = grpcake.NewGrpcClientFromReflectingServer(*url)
+	importFiles := make([]string, 0)
+	if *importFileName != "" {
+		importFiles = append(importFiles, *importFileName)
 	}
 
+	// NOTE: I'm going to add support for importing multiple files in another PR.
+	grpcClient, err := grpcake.NewGrpcClient(globalCtx, *url, *reflection, importFiles)
 	if err != nil {
 		log.Fatalf("error creating grpc client: %v", err)
 	}
@@ -113,4 +119,20 @@ func parseJSONFieldArg(args []string) (jsonString string, err error) {
 	}
 
 	return jsonString, nil
+}
+
+func fail(err error, msg string, args ...interface{}) {
+	if err != nil {
+		msg += ": %v"
+		args = append(args, err)
+	}
+	fmt.Fprintf(os.Stderr, msg, args...)
+	fmt.Fprintln(os.Stderr)
+	if err != nil {
+		os.Exit(1)
+	} else {
+		// nil error means it was CLI usage issue
+		fmt.Fprintf(os.Stderr, "Try '%s -help' for more details.\n", os.Args[0])
+		os.Exit(2)
+	}
 }

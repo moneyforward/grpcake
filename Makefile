@@ -28,5 +28,5 @@ build: vet
 .PHONY:build
 
 run-test-server:
-	go run internal/testing/cmd/testserver/main.go -reflection=$(REFLECT)
+	go run internal/testing/cmd/testserver/main.go -use-reflection=$(REFLECT)
 
