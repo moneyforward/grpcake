@@ -6,6 +6,7 @@ require (
 	github.com/bufbuild/buf v1.17.0
 	github.com/bufbuild/protocompile v0.5.1
 	github.com/golangci/golangci-lint v1.52.2
+	github.com/jhump/protoreflect v1.15.1
 	github.com/tidwall/sjson v1.2.5
 	google.golang.org/grpc v1.46.2
 	google.golang.org/protobuf v1.30.0

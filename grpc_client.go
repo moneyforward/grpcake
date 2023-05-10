@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/bufbuild/protocompile"
-	"github.com/bufbuild/protocompile/linker"
+	"github.com/jhump/protoreflect/grpcreflect"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	reflectpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -19,12 +19,12 @@ import (
 // GrpcClient invokes grpc method on a remote server dynamically, without the need for
 // protobuf code generation.
 type GrpcClient struct {
-	fileDescriptors linker.Files
-	client          grpcdynamic.Stub
+	descriptorSource DescriptorSource
+	client           grpcdynamic.Stub
 }
 
-// NewGrpcClientFromProtoFiles ...
-func NewGrpcClientFromProtoFiles(url string, fileNames []string) (*GrpcClient, error) {
+// NewGrpcClient ...
+func NewGrpcClient(ctx context.Context, url string, reflection bool, fileNames []string) (*GrpcClient, error) {
 	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to grpc server: %v", err)
@@ -32,23 +32,35 @@ func NewGrpcClientFromProtoFiles(url string, fileNames []string) (*GrpcClient, e
 
 	client := grpcdynamic.NewStub(conn)
 
-	compiler := protocompile.Compiler{
-		Resolver: protocompile.WithStandardImports(&protocompile.SourceResolver{}),
+	var fileSource DescriptorSource
+	var reflSource DescriptorSource
+	var descSource DescriptorSource
+
+	if len(fileNames) > 0 {
+		fileSource, err = DescriptorSourceFromProtoFiles(ctx, fileNames...)
+		if err != nil {
+			return nil, fmt.Errorf("failed to process proto source files: %s", err)
+		}
+	}
+	if reflection {
+		refClient := grpcreflect.NewClientV1Alpha(ctx, reflectpb.NewServerReflectionClient(conn))
+		reflSource = DescriptorSourceFromServer(ctx, refClient)
+		descSource = reflSource
+		if fileSource != nil {
+			descSource = compositeSource{reflSource, fileSource}
+		}
+	} else {
+		descSource = fileSource
 	}
 
-	files, err := compiler.Compile(context.Background(), fileNames...)
-	if err != nil {
-		return nil, err
-	}
-
-	return &GrpcClient{fileDescriptors: files, client: client}, nil
+	return &GrpcClient{descriptorSource: descSource, client: client}, nil
 }
 
 // Send ...
 func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody string) (proto.Message, error) {
-	serviceDescriptor := getServiceDescriptorByFqnName(g.fileDescriptors, protoreflect.FullName(serviceName))
-	if serviceDescriptor == nil {
-		return nil, fmt.Errorf("error finding service with name %s", serviceName)
+	serviceDescriptor, err := g.descriptorSource.FindServiceDescriptor(serviceName)
+	if serviceDescriptor == nil || err != nil {
+		return nil, fmt.Errorf("error finding service with name %s: %s", serviceName, err)
 	}
 
 	methodDescriptor := serviceDescriptor.Methods().ByName(protoreflect.Name(methodName))
@@ -58,30 +70,16 @@ func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody
 
 	reqMsg := dynamicpb.NewMessage(methodDescriptor.Input())
 
-	err := protojson.Unmarshal([]byte(jsonBody), reqMsg)
+	err = protojson.Unmarshal([]byte(jsonBody), reqMsg)
 	if err != nil {
 		return nil, fmt.Errorf("error unmarshalling json body to protobuf message: %v", err)
 	}
 
+	// TODO:
 	resMsg, err := g.client.InvokeRpc(context.Background(), methodDescriptor, reqMsg)
 	if err != nil {
 		return nil, fmt.Errorf("error sending grpc request: %v", err)
 	}
 
 	return resMsg, nil
-}
-
-// getServiceDescriptorByFqnName ...
-func getServiceDescriptorByFqnName(fileDescriptors linker.Files, serviceName protoreflect.FullName) protoreflect.ServiceDescriptor {
-	for _, descriptor := range fileDescriptors {
-		svcDescriptors := descriptor.Services()
-		for i := 0; i < svcDescriptors.Len(); i++ {
-			serviceDescriptor := svcDescriptors.Get(i)
-			if serviceDescriptor.FullName() == serviceName {
-				return serviceDescriptor
-			}
-		}
-	}
-
-	return nil
 }

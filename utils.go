@@ -6,13 +6,13 @@ import (
 	"fmt"
 )
 
-// JsonPrettify adds indent to raw json string.
-func JsonPrettify(jsonBytes []byte) (string, error) {
-	var prettifiedJson bytes.Buffer
-	err := json.Indent(&prettifiedJson, jsonBytes, "", "\t")
+// JSONPrettify adds indent to raw json string.
+func JSONPrettify(jsonBytes []byte) (string, error) {
+	var prettifiedJSON bytes.Buffer
+	err := json.Indent(&prettifiedJSON, jsonBytes, "", "\t")
 	if err != nil {
 		return "", fmt.Errorf("error prettify-ing jsong string: %v", err)
 	}
 
-	return prettifiedJson.String(), nil
+	return prettifiedJSON.String(), nil
 }

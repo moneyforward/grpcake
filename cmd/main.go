@@ -5,6 +5,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"os"
 	"strings"
 	"time"
 
@@ -20,17 +21,20 @@ const (
 
 // TODO: write tests
 func main() {
-	url := flag.String("url", "", "GRPC Server URL")
-	grpcMethod := flag.String("grpc-method", "", "GRPC Method")
-	importFileName := flag.String("import", "", "Proto files to import")
-	jsonBody := flag.String("body", "", "JSON body")
+	var (
+		url            = flag.String("url", "", "GRPC Server URL")
+		reflection     = flag.Bool("use-reflection", true, "Try to use server reflection")
+		grpcMethod     = flag.String("grpc-method", "", "GRPC Method")
+		importFileName = flag.String("import", "", "Proto files to import")
+		jsonBody       = flag.String("body", "", "JSON body")
+	)
 
 	flag.Parse()
 
 	if *jsonBody == "" {
-		jsonString, err := parseJsonFieldArg(flag.Args())
+		jsonString, err := parseJSONFieldArg(flag.Args())
 		if err != nil {
-			log.Fatalf("error parsing json field arguments: %v", err)
+			fail(err, "error parsing json field arguments")
 		}
 
 		jsonBody = &jsonString
@@ -39,12 +43,22 @@ func main() {
 	log.Printf("request json body: %s", *jsonBody)
 
 	if *url == "" || *grpcMethod == "" {
-		log.Fatalf("error url or grpc method is not passed")
+		fail(nil, "error url or grpc method is not passed")
+	}
+
+	if !*reflection && *importFileName == "" {
+		fail(nil, "No protoset files or proto files specified and -use-reflection set to false.")
 	}
 
 	globalCtx := context.Background()
+
+	importFiles := make([]string, 0)
+	if *importFileName != "" {
+		importFiles = append(importFiles, *importFileName)
+	}
+
 	// NOTE: I'm going to add support for importing multiple files in another PR.
-	grpcClient, err := grpcake.NewGrpcClientFromProtoFiles(*url, []string{*importFileName})
+	grpcClient, err := grpcake.NewGrpcClient(globalCtx, *url, *reflection, importFiles)
 	if err != nil {
 		log.Fatalf("error creating grpc client: %v", err)
 	}
@@ -65,21 +79,21 @@ func main() {
 		log.Fatalf("error sending grpc request: %v", err)
 	}
 
-	resMsgJson, err := protojson.Marshal(resMsg)
+	resMsgJSON, err := protojson.Marshal(resMsg)
 	if err != nil {
 		log.Fatalf("error printing response message as JSON: %v", err)
 	}
 
-	prettifiedJson, err := grpcake.JsonPrettify(resMsgJson)
+	prettiedJSON, err := grpcake.JSONPrettify(resMsgJSON)
 	if err != nil {
 		log.Fatalf("error prettify-ing response json: %v", err)
 	}
-	log.Println("Response:", prettifiedJson)
+	log.Println("Response:", prettiedJSON)
 }
 
-// parseJsonFieldArg Parse JSON field arguments into a json string.
+// parseJSONFieldArg Parse JSON field arguments into a json string.
 // take a look at this case "e f:"=a will be parsed as e f:=a
-func parseJsonFieldArg(args []string) (jsonString string, err error) {
+func parseJSONFieldArg(args []string) (jsonString string, err error) {
 	jsonString = "{}"
 
 	var parts []string
@@ -105,4 +119,20 @@ func parseJsonFieldArg(args []string) (jsonString string, err error) {
 	}
 
 	return jsonString, nil
+}
+
+func fail(err error, msg string, args ...interface{}) {
+	if err != nil {
+		msg += ": %v"
+		args = append(args, err)
+	}
+	fmt.Fprintf(os.Stderr, msg, args...)
+	fmt.Fprintln(os.Stderr)
+	if err != nil {
+		os.Exit(1)
+	} else {
+		// nil error means it was CLI usage issue
+		fmt.Fprintf(os.Stderr, "Try '%s -help' for more details.\n", os.Args[0])
+		os.Exit(2)
+	}
 }
