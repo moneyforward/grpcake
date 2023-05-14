@@ -2,9 +2,9 @@
 // versions:
 // - protoc-gen-go-grpc v1.3.0
 // - protoc             (unknown)
-// source: internal/testing/example.proto
+// source: foo/example.proto
 
-package testing
+package foo
 
 import (
 	context "context"
@@ -19,11 +19,11 @@ import (
 const _ = grpc.SupportPackageIsVersion7
 
 const (
-	ExampleService_UnaryExample_FullMethodName               = "/testing.ExampleService/UnaryExample"
-	ExampleService_ClientStreamExample_FullMethodName        = "/testing.ExampleService/ClientStreamExample"
-	ExampleService_ServerStreamExample_FullMethodName        = "/testing.ExampleService/ServerStreamExample"
-	ExampleService_BidirectionalStreamExample_FullMethodName = "/testing.ExampleService/BidirectionalStreamExample"
-	ExampleService_AdvancedExample_FullMethodName            = "/testing.ExampleService/AdvancedExample"
+	ExampleService_UnaryExample_FullMethodName               = "/foo.ExampleService/UnaryExample"
+	ExampleService_ClientStreamExample_FullMethodName        = "/foo.ExampleService/ClientStreamExample"
+	ExampleService_ServerStreamExample_FullMethodName        = "/foo.ExampleService/ServerStreamExample"
+	ExampleService_BidirectionalStreamExample_FullMethodName = "/foo.ExampleService/BidirectionalStreamExample"
+	ExampleService_AdvancedExample_FullMethodName            = "/foo.ExampleService/AdvancedExample"
 )
 
 // ExampleServiceClient is the client API for ExampleService service.
@@ -327,7 +327,7 @@ func _ExampleService_AdvancedExample_Handler(srv interface{}, ctx context.Contex
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var ExampleService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "testing.ExampleService",
+	ServiceName: "foo.ExampleService",
 	HandlerType: (*ExampleServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -357,5 +357,5 @@ var ExampleService_ServiceDesc = grpc.ServiceDesc{
 			ClientStreams: true,
 		},
 	},
-	Metadata: "internal/testing/example.proto",
+	Metadata: "foo/example.proto",
 }

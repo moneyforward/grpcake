@@ -10,11 +10,16 @@ import (
 	"google.golang.org/grpc"
 	grpcreflect "google.golang.org/grpc/reflection"
 
-	testingpb "github.com/moneyforward/grpcake/internal/testing"
+	barpb "github.com/moneyforward/grpcake/internal/testing/pb/bar"
+	bazpb "github.com/moneyforward/grpcake/internal/testing/pb/baz"
+	foopb "github.com/moneyforward/grpcake/internal/testing/pb/foo"
 )
 
 func main() {
 	reflection := flag.Bool("use-reflection", false, "Run server with reflection support")
+
+	flag.Parse()
+
 	port := 6069
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
 	if err != nil {
@@ -22,9 +27,9 @@ func main() {
 	}
 
 	grpcServer := grpc.NewServer()
-	testingpb.RegisterExampleServiceServer(grpcServer, newExampleServer())
-
-	flag.Parse()
+	foopb.RegisterExampleServiceServer(grpcServer, newFooServer())
+	barpb.RegisterTestServiceServer(grpcServer, newBarServer())
+	bazpb.RegisterTestServiceServer(grpcServer, newBazServer())
 
 	if *reflection {
 		// Register reflection service on gRPC server.
@@ -32,19 +37,44 @@ func main() {
 	}
 
 	log.Printf("Service is running on localhost:%d", port)
-
-	grpcServer.Serve(lis)
+	err = grpcServer.Serve(lis)
+	if err != nil {
+		log.Fatalf("failed to serve grpc server: %v", err)
+	}
 }
 
-// TODO: add the rest of the methods
-type exampleServer struct {
-	*testingpb.UnimplementedExampleServiceServer
+type fooServer struct {
+	*foopb.UnimplementedExampleServiceServer
 }
 
-func newExampleServer() *exampleServer {
-	return &exampleServer{}
+func newFooServer() *fooServer {
+	return &fooServer{}
 }
 
-func (e *exampleServer) UnaryExample(ctx context.Context, pb *testingpb.BasicTypes) (*testingpb.BasicTypes, error) {
+func (e *fooServer) UnaryExample(ctx context.Context, pb *foopb.BasicTypes) (*foopb.BasicTypes, error) {
+	return pb, nil
+}
+
+type barServer struct {
+	*barpb.UnimplementedTestServiceServer
+}
+
+func newBarServer() *barServer {
+	return &barServer{}
+}
+
+func (b *barServer) UnaryExample(ctx context.Context, pb *barpb.ExampleMessage) (*barpb.ExampleMessage, error) {
+	return pb, nil
+}
+
+type bazServer struct {
+	*bazpb.UnimplementedTestServiceServer
+}
+
+func newBazServer() *bazServer {
+	return &bazServer{}
+}
+
+func (b *bazServer) Greeting(ctx context.Context, pb *bazpb.GreetingMessage) (*bazpb.GreetingMessage, error) {
 	return pb, nil
 }

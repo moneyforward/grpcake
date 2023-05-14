@@ -40,9 +40,11 @@ Change the value of `REFLECT` to `true` to run test server with reflection.
 
 ### With reflection
 
+By default, the app will use server reflection for proto discovery if no
+proto files are passed.
+
 ```sh
-$ bin/grpcake --url localhost:6069 -use-reflection=true\
---grpc-method testing.ExampleService/UnaryExample \
+$ bin/grpcake --url localhost:6069 --grpc-method foo.ExampleService/UnaryExample \
 long_field:=10 int_field:=1 float_field:=1.5 double_field:=2.5 bool_field:=true \
 string_field="hello world" bytes_field="b25lcGllY2VraW5kYXN1Y2sK"
 
@@ -59,10 +61,13 @@ string_field="hello world" bytes_field="b25lcGllY2VraW5kYXN1Y2sK"
 ```
 
 ### Without reflection
+
+If one or more `.proto` file paths are provided as an argument, the app will
+use them instead of server reflection.
+
 ```sh
-$ bin/grpcake --url localhost:6069 -use-reflectin=false\
---grpc-method testing.ExampleService/UnaryExample \
---import internal/testing/example.proto \
+$ bin/grpcake --url localhost:6069 --grpc-method foo.ExampleService/UnaryExample \
+--proto internal/testing/proto/foo/example.proto \
 long_field:=10 int_field:=1 float_field:=1.5 double_field:=2.5 bool_field:=true \
 string_field="hello world" bytes_field="b25lcGllY2VraW5kYXN1Y2sK"
 
@@ -75,6 +80,22 @@ string_field="hello world" bytes_field="b25lcGllY2VraW5kYXN1Y2sK"
         "boolField": true,
         "stringField": "hello world",
         "bytesField": "b25lcGllY2VraW5kYXN1Y2sK"
+}
+```
+
+### Importing multiple protobuf files
+
+The app supports importing statements inside protobuf files. These paths will be resolved
+using the values from `--import-path` flag. 
+
+```shell
+$ bin/grpcake --url localhost:6069 --grpc-method bar.TestService/UnaryExample --import-path internal/testing/proto --proto bar/example.proto,foo/example.proto int32Field:=1 basicTypes.intField:=2
+2023/05/15 08:35:09 request json body: {"int32Field":1,"basicTypes":{"intField":2}}
+2023/05/15 08:35:09 Response: {
+        "int32Field": 1,
+        "basicTypes": {
+                "intField": 2
+        }
 }
 ```
 

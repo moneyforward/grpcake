@@ -39,9 +39,11 @@ func (fs fileSource) FindServiceDescriptor(fullyQualifiedName string) (protorefl
 	return nil, fmt.Errorf("error finding service with name %s", fullyQualifiedName)
 }
 
-func DescriptorSourceFromProtoFiles(ctx context.Context, fileNames ...string) (DescriptorSource, error) {
+func DescriptorSourceFromProtoFiles(ctx context.Context, importPaths, fileNames []string) (DescriptorSource, error) {
 	compiler := protocompile.Compiler{
-		Resolver: protocompile.WithStandardImports(&protocompile.SourceResolver{}),
+		Resolver: protocompile.WithStandardImports(&protocompile.SourceResolver{
+			ImportPaths: importPaths,
+		}),
 	}
 	files, err := compiler.Compile(ctx, fileNames...)
 	if err != nil {
