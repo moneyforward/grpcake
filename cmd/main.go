@@ -24,7 +24,6 @@ const (
 func main() {
 	var (
 		url            = flag.String("url", "", "GRPC Server URL")
-		reflection     = flag.Bool("use-reflection", true, "Try to use server reflection")
 		grpcMethod     = flag.String("grpc-method", "", "GRPC Method")
 		rawImportFiles = flag.String("proto", "", "Proto files to import")
 		jsonBody       = flag.String("body", "", "JSON body")
@@ -51,10 +50,6 @@ func main() {
 
 	if *url == "" || *grpcMethod == "" {
 		fail(nil, "error url or grpc method is not passed")
-	}
-
-	if !*reflection && *rawImportFiles == "" {
-		fail(nil, "No protoset files or proto files specified and -use-reflection set to false.")
 	}
 
 	globalCtx := context.Background()

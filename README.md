@@ -86,7 +86,7 @@ string_field="hello world" bytes_field="b25lcGllY2VraW5kYXN1Y2sK"
 ### Importing multiple protobuf files
 
 The app supports importing statements inside protobuf files. These paths will be resolved
-using the values from `--import-path` flag. 
+using the values from `--import-path` flag. Import path default to the current directory.
 
 ```shell
 $ bin/grpcake --url localhost:6069 --grpc-method bar.TestService/UnaryExample --import-path internal/testing/proto --proto bar/example.proto,foo/example.proto int32Field:=1 basicTypes.intField:=2
