@@ -80,19 +80,3 @@ func reflectionSupport(err error) error {
 	}
 	return err
 }
-
-// Uses a file source as a fallback for resolving symbols and extensions, but
-// only uses the reflection source for listing services
-type compositeSource struct {
-	reflection DescriptorSource
-	file       DescriptorSource
-}
-
-// FindSymbol returns a descriptor for the given fully-qualified symbol name.
-func (cs compositeSource) FindServiceDescriptor(fullyQualifiedName string) (protoreflect.ServiceDescriptor, error) {
-	d, err := cs.reflection.FindServiceDescriptor(fullyQualifiedName)
-	if err == nil {
-		return d, nil
-	}
-	return cs.file.FindServiceDescriptor(fullyQualifiedName)
-}
