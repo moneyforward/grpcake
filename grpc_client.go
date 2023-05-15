@@ -88,7 +88,7 @@ func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody
 	}
 
 	// TODO:
-	resMsg, err := g.client.InvokeRpc(context.Background(), methodDescriptor, reqMsg)
+	resMsg, err := g.client.InvokeRPC(context.Background(), methodDescriptor, reqMsg)
 	if err != nil {
 		return nil, fmt.Errorf("error sending grpc request: %v", err)
 	}

@@ -18,8 +18,8 @@ func NewStub(channel grpc.ClientConnInterface) Stub {
 	return Stub{channel: channel}
 }
 
-// InvokeRpc calls unary RPC methods on the server.
-func (s Stub) InvokeRpc(ctx context.Context, method protoreflect.MethodDescriptor, request proto.Message, opts ...grpc.CallOption) (proto.Message, error) {
+// InvokeRPC calls unary RPC methods on the server.
+func (s Stub) InvokeRPC(ctx context.Context, method protoreflect.MethodDescriptor, request proto.Message, opts ...grpc.CallOption) (proto.Message, error) {
 	if method.IsStreamingClient() || method.IsStreamingServer() {
 		return nil, fmt.Errorf("InvokeRpc is for unary methods; %q is %s", method.FullName(), methodType(method))
 	}
