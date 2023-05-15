@@ -24,7 +24,7 @@ type GrpcClient struct {
 }
 
 // NewGrpcClient ...
-func NewGrpcClient(ctx context.Context, url string, reflection bool, fileNames []string) (*GrpcClient, error) {
+func NewGrpcClient(ctx context.Context, url string, descSource DescriptorSource) (*GrpcClient, error) {
 	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to grpc server: %v", err)
@@ -32,28 +32,40 @@ func NewGrpcClient(ctx context.Context, url string, reflection bool, fileNames [
 
 	client := grpcdynamic.NewStub(conn)
 
-	var fileSource DescriptorSource
-	var reflSource DescriptorSource
-	var descSource DescriptorSource
-
-	if len(fileNames) > 0 {
-		fileSource, err = DescriptorSourceFromProtoFiles(ctx, fileNames...)
-		if err != nil {
-			return nil, fmt.Errorf("failed to process proto source files: %s", err)
-		}
-	}
-	if reflection {
-		refClient := grpcreflect.NewClientV1Alpha(ctx, reflectpb.NewServerReflectionClient(conn))
-		reflSource = DescriptorSourceFromServer(ctx, refClient)
-		descSource = reflSource
-		if fileSource != nil {
-			descSource = compositeSource{reflSource, fileSource}
-		}
-	} else {
-		descSource = fileSource
-	}
-
 	return &GrpcClient{descriptorSource: descSource, client: client}, nil
+}
+
+// NewGrpcClientFromReflection ...
+func NewGrpcClientFromReflection(ctx context.Context, url string) (*GrpcClient, error) {
+	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to grpc server: %v", err)
+	}
+
+	refClient := grpcreflect.NewClientV1Alpha(ctx, reflectpb.NewServerReflectionClient(conn))
+	reflSource := DescriptorSourceFromServer(ctx, refClient)
+	descSource := reflSource
+
+	client := grpcdynamic.NewStub(conn)
+
+	return &GrpcClient{
+		descriptorSource: descSource,
+		client:           client,
+	}, nil
+}
+
+// NewGrpcClientFromProtoFiles ...
+func NewGrpcClientFromProtoFiles(ctx context.Context, url string, importPaths, fileNames []string) (*GrpcClient, error) {
+	if len(fileNames) == 0 {
+		return nil, fmt.Errorf("error received empty list of files")
+	}
+
+	fileSource, err := DescriptorSourceFromProtoFiles(ctx, importPaths, fileNames)
+	if err != nil {
+		return nil, fmt.Errorf("failed to process proto source files: %s", err)
+	}
+
+	return NewGrpcClient(ctx, url, fileSource)
 }
 
 // Send ...

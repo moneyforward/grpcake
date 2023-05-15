@@ -39,9 +39,11 @@ func (fs fileSource) FindServiceDescriptor(fullyQualifiedName string) (protorefl
 	return nil, fmt.Errorf("error finding service with name %s", fullyQualifiedName)
 }
 
-func DescriptorSourceFromProtoFiles(ctx context.Context, fileNames ...string) (DescriptorSource, error) {
+func DescriptorSourceFromProtoFiles(ctx context.Context, importPaths, fileNames []string) (DescriptorSource, error) {
 	compiler := protocompile.Compiler{
-		Resolver: protocompile.WithStandardImports(&protocompile.SourceResolver{}),
+		Resolver: protocompile.WithStandardImports(&protocompile.SourceResolver{
+			ImportPaths: importPaths,
+		}),
 	}
 	files, err := compiler.Compile(ctx, fileNames...)
 	if err != nil {
@@ -77,20 +79,4 @@ func reflectionSupport(err error) error {
 		return errors.New("server does not support the reflection API")
 	}
 	return err
-}
-
-// Uses a file source as a fallback for resolving symbols and extensions, but
-// only uses the reflection source for listing services
-type compositeSource struct {
-	reflection DescriptorSource
-	file       DescriptorSource
-}
-
-// FindSymbol returns a descriptor for the given fully-qualified symbol name.
-func (cs compositeSource) FindServiceDescriptor(fullyQualifiedName string) (protoreflect.ServiceDescriptor, error) {
-	d, err := cs.reflection.FindServiceDescriptor(fullyQualifiedName)
-	if err == nil {
-		return d, nil
-	}
-	return cs.file.FindServiceDescriptor(fullyQualifiedName)
 }
