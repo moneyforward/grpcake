@@ -19,6 +19,7 @@ func main() {
 	var (
 		url        = flag.String("url", "", "GRPC Server URL")
 		grpcMethod = flag.String("grpc-method", "", "GRPC Method")
+		proto      = flag.String("proto", "", "Proto files to import")
 	)
 
 	flag.Parse()
@@ -48,6 +49,11 @@ func main() {
 	fmt.Printf("service: %s \nmethod: %s\n", serviceName, methodName)
 
 	// make client
+	if *proto == "" {
+		fmt.Fprint(os.Stderr, "error proto file is not passed")
+		fmt.Fprintln(os.Stderr)
+		os.Exit(2)
+	}
 
 	// send request to client
 }
