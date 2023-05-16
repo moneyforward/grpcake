@@ -5,12 +5,19 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"github.com/tidwall/sjson"
 )
 
+const (
+	DefaultTimeout    = 15 * time.Second
+	FilePathSeparator = ","
+)
+
 func main() {
 	var (
+		url        = flag.String("url", "", "GRPC Server URL")
 		grpcMethod = flag.String("grpc-method", "", "GRPC Method")
 	)
 
@@ -25,15 +32,24 @@ func main() {
 
 	fmt.Printf("request json body:\n %s\n", jsonBody)
 
+	// get service URL and gRPC method
+	if *url == "" || *grpcMethod == "" {
+		fmt.Fprint(os.Stderr, "error url or grpc method is not passed")
+		fmt.Fprintln(os.Stderr)
+		os.Exit(2)
+	}
 	parts := strings.SplitN(*grpcMethod, "/", 2)
 	if len(parts) != 2 {
 		fmt.Fprint(os.Stderr, "error invalid grpc method name")
 	}
-
 	serviceName := parts[0]
 	methodName := parts[1]
 
 	fmt.Printf("service: %s \nmethod: %s\n", serviceName, methodName)
+
+	// make client
+
+	// send request to client
 }
 
 // parseJSONFieldArg Parse JSON field arguments into a json string.
