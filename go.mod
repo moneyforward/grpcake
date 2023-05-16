@@ -7,7 +7,6 @@ require (
 	github.com/bufbuild/protocompile v0.5.1
 	github.com/golangci/golangci-lint v1.52.2
 	github.com/jhump/protoreflect v1.15.1
-	github.com/tidwall/sjson v1.2.5
 	google.golang.org/grpc v1.46.2
 	google.golang.org/protobuf v1.30.0
 )
@@ -185,9 +184,6 @@ require (
 	github.com/tdakkota/asciicheck v0.2.0 // indirect
 	github.com/tetafro/godot v1.4.11 // indirect
 	github.com/tetratelabs/wazero v1.0.1 // indirect
-	github.com/tidwall/gjson v1.14.4 // indirect
-	github.com/tidwall/match v1.1.1 // indirect
-	github.com/tidwall/pretty v1.2.1 // indirect
 	github.com/timakin/bodyclose v0.0.0-20221125081123-e39cf3fc478e // indirect
 	github.com/timonwong/loggercheck v0.9.4 // indirect
 	github.com/tomarrell/wrapcheck/v2 v2.8.1 // indirect
