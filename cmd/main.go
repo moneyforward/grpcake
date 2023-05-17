@@ -55,7 +55,21 @@ func main() {
 		os.Exit(2)
 	}
 
-	// send request to client
+	// construct client
+	ctx := context.Background()
+
+	grpcClient, err := NewGrpcClientFromProtoFiles(ctx, *url, *proto)
+	if err != nil {
+		log.Fatalf("error creating grpc client: %v", err)
+	}
+// GrpcClient invokes grpc method on a remote server dynamically, without the need for
+// protobuf code generation.
+type GrpcClient struct {
+	fileDescriptors linker.Files
+	client          grpc.ClientConnInterface
+}
+func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFilePath string) (*GrpcClient, error) {
+	return &GrpcClient{nil, nil}, nil
 }
 
 // parseJSONFieldArg Parse JSON field arguments into a json string.
