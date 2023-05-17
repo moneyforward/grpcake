@@ -22,7 +22,7 @@ type GrpcClient struct {
 }
 
 func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFilePath string) (*GrpcClient, error) {
-	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := dial(url)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to grpc server: %v", err)
 	}
@@ -37,7 +37,7 @@ func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFilePath 
 
 // NewGrpcClientFromReflection ...
 func NewGrpcClientFromReflection(ctx context.Context, url string) (*GrpcClient, error) {
-	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	conn, err := dial(url)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to grpc server: %v", err)
 	}
@@ -50,6 +50,11 @@ func NewGrpcClientFromReflection(ctx context.Context, url string) (*GrpcClient, 
 		descriptorSource: descSource,
 		client:           conn,
 	}, nil
+}
+
+func dial(url string) (grpc.ClientConnInterface, error) {
+	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	return conn, err
 }
 
 func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody string) (proto.Message, error) {
