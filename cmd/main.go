@@ -114,7 +114,10 @@ func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFilePath 
 }
 
 func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody string) (proto.Message, error) {
-	return nil, nil
+	// get service descriptor
+	// get method descriptor
+	// create the proto msg
+	// invoke the RPC method with the created msg
 }
 
 // parseJSONFieldArg Parse JSON field arguments into a json string.
