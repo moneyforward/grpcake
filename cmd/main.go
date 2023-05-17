@@ -162,6 +162,8 @@ func getServiceDescriptorByFqnName(fileDescriptors linker.Files, serviceName pro
 // invokeRPC calls unary RPC methods on the server.
 func (g GrpcClient) invokeRPC(ctx context.Context, method protoreflect.MethodDescriptor, request proto.Message, opts ...grpc.CallOption) (proto.Message, error) {
 	return nil, nil
+	// check msg type to make sure it matches what the method expects
+	// make the gRPC call
 }
 
 // parseJSONFieldArg Parse JSON field arguments into a json string.
