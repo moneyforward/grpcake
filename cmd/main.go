@@ -22,12 +22,23 @@ const (
 
 func main() {
 	var (
-		url        = flag.String("url", "", "GRPC Server URL")
-		grpcMethod = flag.String("grpc-method", "", "GRPC Method")
-		proto      = flag.String("proto", "", "Proto files to import")
+		url            = flag.String("url", "", "GRPC Server URL")
+		grpcMethod     = flag.String("grpc-method", "", "GRPC Method")
+		rawProtoFiles  = flag.String("proto", "", "Proto files to import delimited by comma")
+		rawImportPaths = flag.String("import-paths", "", "List of import paths delimited by comma")
 	)
 
 	flag.Parse()
+
+	importPaths := make([]string, 0)
+	if *rawImportPaths != "" {
+		importPaths = strings.Split(*rawImportPaths, FilePathSeparator)
+	}
+
+	protoFiles := make([]string, 0)
+	if *rawProtoFiles != "" {
+		protoFiles = strings.Split(*rawProtoFiles, FilePathSeparator)
+	}
 
 	// parse the request body from non-flag arguments
 	jsonBody, err := parseJSONFieldArg(flag.Args())
@@ -57,17 +68,13 @@ func main() {
 	ctx := context.Background()
 
 	var grpcClient *grpcake.GrpcClient
-	if *proto != "" {
-		// if proto file is given use it
-		grpcClient, err = grpcake.NewGrpcClientFromProtoFiles(ctx, *url, *proto)
+	if len(protoFiles) > 0 {
+		// if proto files are given use them
+		grpcClient, err = grpcake.NewGrpcClientFromProtoFiles(ctx, *url, protoFiles, importPaths)
 	} else {
 		// otherwise, use reflection
 		grpcClient, err = grpcake.NewGrpcClientFromReflection(ctx, *url)
 	}
-	if err != nil {
-		log.Fatalf("error creating grpc client: %v", err)
-	}
-
 	if err != nil {
 		log.Fatalf("error creating grpc client: %v", err)
 	}
