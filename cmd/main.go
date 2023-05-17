@@ -16,6 +16,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/reflect/protoreflect"
+	"google.golang.org/protobuf/types/dynamicpb"
 )
 
 const (
@@ -115,9 +117,41 @@ func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFilePath 
 
 func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody string) (proto.Message, error) {
 	// get service descriptor
+	serviceDescriptor := getServiceDescriptorByFqnName(g.fileDescriptors, protoreflect.FullName(serviceName))
+	if serviceDescriptor == nil {
+		return nil, fmt.Errorf("error finding service with name %s", serviceName)
+	}
+
 	// get method descriptor
+	methodDescriptor := serviceDescriptor.Methods().ByName(protoreflect.Name(methodName))
+	if methodDescriptor == nil {
+		return nil, fmt.Errorf("error finding method with name %s", methodName)
+	}
+
 	// create the proto msg
+	reqMsg := dynamicpb.NewMessage(methodDescriptor.Input())
+	err := protojson.Unmarshal([]byte(jsonBody), reqMsg)
+	if err != nil {
+		return nil, fmt.Errorf("error unmarshalling json body to protobuf message: %v", err)
+	}
+
 	// invoke the RPC method with the created msg
+	resMsg, err := g.invokeRPC(ctx, methodDescriptor, reqMsg)
+	if err != nil {
+		return nil, fmt.Errorf("error sending grpc request: %v", err)
+	}
+
+	return resMsg, nil
+}
+
+// getServiceDescriptorByFqnName finds a service descriptor given a set of file descriptors.
+func getServiceDescriptorByFqnName(fileDescriptors linker.Files, serviceName protoreflect.FullName) protoreflect.ServiceDescriptor {
+	return nil
+}
+
+// invokeRPC calls unary RPC methods on the server.
+func (g GrpcClient) invokeRPC(ctx context.Context, method protoreflect.MethodDescriptor, request proto.Message, opts ...grpc.CallOption) (proto.Message, error) {
+	return nil, nil
 }
 
 // parseJSONFieldArg Parse JSON field arguments into a json string.
