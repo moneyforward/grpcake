@@ -53,17 +53,21 @@ func main() {
 
 	fmt.Printf("service: %s \nmethod: %s\n", serviceName, methodName)
 
-	// make client
-	if *proto == "" {
-		fmt.Fprint(os.Stderr, "error proto file is not passed")
-		fmt.Fprintln(os.Stderr)
-		os.Exit(2)
-	}
-
 	// construct client
 	ctx := context.Background()
 
-	grpcClient, err := grpcake.NewGrpcClientFromProtoFiles(ctx, *url, *proto)
+	var grpcClient *grpcake.GrpcClient
+	if *proto != "" {
+		// if proto file is given use it
+		grpcClient, err = grpcake.NewGrpcClientFromProtoFiles(ctx, *url, *proto)
+	} else {
+		// otherwise, use reflection
+		grpcClient, err = grpcake.NewGrpcClientFromReflection(ctx, *url)
+	}
+	if err != nil {
+		log.Fatalf("error creating grpc client: %v", err)
+	}
+
 	if err != nil {
 		log.Fatalf("error creating grpc client: %v", err)
 	}
