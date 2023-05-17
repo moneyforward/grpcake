@@ -1,7 +1,9 @@
 package main
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"flag"
 	"fmt"
 	"log"
@@ -93,7 +95,11 @@ func main() {
 		log.Fatalf("error printing response message as JSON: %v", err)
 	}
 
-	fmt.Printf("Response:\n%s", resMsgJSON)
+	prettyResponse, err := JSONPrettify(resMsgJSON)
+	if err != nil {
+		log.Fatalf("error prettify-ing response json: %v", err)
+	}
+	fmt.Printf("Response:\n%s\n", prettyResponse)
 }
 
 // parseJSONFieldArg Parse JSON field arguments into a json string.
@@ -123,4 +129,15 @@ func parseJSONFieldArg(args []string) (jsonString string, err error) {
 	}
 
 	return jsonString, nil
+}
+
+// JSONPrettify adds indent to raw json string.
+func JSONPrettify(jsonBytes []byte) (string, error) {
+	var prettifiedJSON bytes.Buffer
+	err := json.Indent(&prettifiedJSON, jsonBytes, "", "\t")
+	if err != nil {
+		return "", fmt.Errorf("error prettify-ing jsong string: %v", err)
+	}
+
+	return prettifiedJSON.String(), nil
 }
