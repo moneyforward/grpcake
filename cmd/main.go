@@ -1,13 +1,21 @@
 package main
 
 import (
+	"context"
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 	"time"
 
+	"github.com/bufbuild/protocompile"
+	"github.com/bufbuild/protocompile/linker"
 	"github.com/tidwall/sjson"
+	"google.golang.org/grpc"
+	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/proto"
 )
 
 const (
@@ -62,6 +70,24 @@ func main() {
 	if err != nil {
 		log.Fatalf("error creating grpc client: %v", err)
 	}
+
+	// send request
+	timeoutCtx, cancel := context.WithTimeout(ctx, DefaultTimeout)
+	defer cancel()
+	resProtoMsg, err := grpcClient.Send(timeoutCtx, serviceName, methodName, jsonBody)
+	if err != nil {
+		log.Fatalf("error sending grpc request: %v", err)
+	}
+
+	// convert proto msg response to bytes of json
+	resMsgJSON, err := protojson.Marshal(resProtoMsg)
+	if err != nil {
+		log.Fatalf("error printing response message as JSON: %v", err)
+	}
+
+	fmt.Printf("Response:\n%s", resMsgJSON)
+}
+
 // GrpcClient invokes grpc method on a remote server dynamically, without the need for
 // protobuf code generation.
 type GrpcClient struct {
@@ -85,6 +111,10 @@ func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFilePath 
 	}
 
 	return &GrpcClient{fileDescriptors: files, client: conn}, nil
+}
+
+func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody string) (proto.Message, error) {
+	return nil, nil
 }
 
 // parseJSONFieldArg Parse JSON field arguments into a json string.
