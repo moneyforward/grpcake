@@ -161,9 +161,38 @@ func getServiceDescriptorByFqnName(fileDescriptors linker.Files, serviceName pro
 
 // invokeRPC calls unary RPC methods on the server.
 func (g GrpcClient) invokeRPC(ctx context.Context, method protoreflect.MethodDescriptor, request proto.Message, opts ...grpc.CallOption) (proto.Message, error) {
-	return nil, nil
+	if method.IsStreamingClient() || method.IsStreamingServer() {
+		return nil, fmt.Errorf("InvokeRpc is for unary methods; %q is %s", method.FullName(), methodType(method))
+	}
+
 	// check msg type to make sure it matches what the method expects
+	if err := checkMessageType(method.Input(), request); err != nil {
+		return nil, fmt.Errorf("error checking message type: %v", err)
+	}
+
 	// make the gRPC call
+	resp := dynamicpb.NewMessage(method.Output())
+	if err := g.client.Invoke(ctx, requestMethod(method), request, resp, opts...); err != nil {
+		return nil, fmt.Errorf("error invoking rpc method: %v", err)
+	}
+
+	return resp, nil
+}
+
+// checkMessageType checks if a given proto message fit with the given protoreflect.MessageDescriptor.
+func checkMessageType(md protoreflect.MessageDescriptor, msg proto.Message) error {
+	return nil
+}
+
+// requestMethod generate method name string for invoking rpc methods.
+func requestMethod(md protoreflect.MethodDescriptor) string {
+	return ""
+}
+
+// methodType returns a string to specify whether a method
+// is unary, client streaming, server streaming or bidirectional streaming.
+func methodType(md protoreflect.MethodDescriptor) string {
+	return ""
 }
 
 // parseJSONFieldArg Parse JSON field arguments into a json string.
