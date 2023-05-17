@@ -11,6 +11,7 @@ import (
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	reflectpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -44,6 +45,23 @@ func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFilePath 
 	}
 
 	return &GrpcClient{descriptorSource: fileSource, client: conn}, nil
+}
+
+// NewGrpcClientFromReflection ...
+func NewGrpcClientFromReflection(ctx context.Context, url string) (*GrpcClient, error) {
+	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to grpc server: %v", err)
+	}
+
+	refClient := grpcreflect.NewClientV1Alpha(ctx, reflectpb.NewServerReflectionClient(conn))
+	reflSource := DescriptorSourceFromServer(ctx, refClient)
+	descSource := reflSource
+
+	return &GrpcClient{
+		descriptorSource: descSource,
+		client:           conn,
+	}, nil
 }
 
 func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody string) (proto.Message, error) {
