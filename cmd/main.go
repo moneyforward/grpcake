@@ -68,8 +68,23 @@ type GrpcClient struct {
 	fileDescriptors linker.Files
 	client          grpc.ClientConnInterface
 }
+
 func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFilePath string) (*GrpcClient, error) {
-	return &GrpcClient{nil, nil}, nil
+	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+	if err != nil {
+		return nil, fmt.Errorf("error connecting to grpc server: %v", err)
+	}
+
+	compiler := protocompile.Compiler{
+		Resolver: protocompile.WithStandardImports(&protocompile.SourceResolver{}),
+	}
+
+	files, err := compiler.Compile(ctx, protoFilePath)
+	if err != nil {
+		return nil, err
+	}
+
+	return &GrpcClient{fileDescriptors: files, client: conn}, nil
 }
 
 // parseJSONFieldArg Parse JSON field arguments into a json string.
