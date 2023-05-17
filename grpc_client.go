@@ -2,12 +2,16 @@ package grpcake
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/bufbuild/protocompile"
 	"github.com/bufbuild/protocompile/linker"
+	"github.com/jhump/protoreflect/grpcreflect"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/reflect/protoreflect"
@@ -99,6 +103,28 @@ func (fs fileSource) FindServiceDescriptor(fullyQualifiedName string) (protorefl
 	}
 
 	return nil, fmt.Errorf("error finding service with name %s", fullyQualifiedName)
+}
+
+type serverSource struct {
+	client *grpcreflect.Client
+}
+
+// DescriptorSourceFromServer creates a DescriptorSource that uses the given gRPC reflection client
+// to interrogate a server for descriptor information. If the server does not support the reflection
+// API then the various DescriptorSource methods will return ErrReflectionNotSupported
+func DescriptorSourceFromServer(_ context.Context, refClient *grpcreflect.Client) DescriptorSource {
+	return serverSource{client: refClient}
+}
+
+func (ss serverSource) FindServiceDescriptor(fullyQualifiedName string) (protoreflect.ServiceDescriptor, error) {
+	sd, err := ss.client.ResolveService(fullyQualifiedName)
+	if err != nil {
+		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unimplemented {
+			return nil, errors.New("server does not support the reflection API")
+		}
+		return nil, err
+	}
+	return sd.UnwrapService(), nil
 }
 
 // invokeRPC calls unary RPC methods on the server.
