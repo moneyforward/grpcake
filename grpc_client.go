@@ -21,13 +21,13 @@ type GrpcClient struct {
 	client           grpc.ClientConnInterface
 }
 
-func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFilePath string) (*GrpcClient, error) {
+func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFiles, importPaths []string) (*GrpcClient, error) {
 	conn, err := dial(url)
 	if err != nil {
 		return nil, fmt.Errorf("error connecting to grpc server: %v", err)
 	}
 
-	fileSource, err := DescriptorSourceFromProtoFiles(ctx, protoFilePath)
+	fileSource, err := DescriptorSourceFromProtoFiles(ctx, protoFiles, importPaths)
 	if err != nil {
 		return nil, err
 	}
