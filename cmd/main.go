@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"log"
 	"os"
 	"strings"
 	"time"
@@ -45,21 +44,18 @@ func main() {
 	// parse the request body from non-flag arguments
 	jsonBody, err := parseJSONFieldArg(flag.Args())
 	if err != nil {
-		fmt.Fprintf(os.Stderr, "error parsing json field arguments: %s", err)
-		os.Exit(1)
+		fail(err, "error parsing json field arguments")
 	}
 
 	fmt.Printf("request json body:\n %s\n", jsonBody)
 
 	// get service URL and gRPC method
 	if *url == "" || *grpcMethod == "" {
-		fmt.Fprint(os.Stderr, "error url or grpc method is not passed")
-		fmt.Fprintln(os.Stderr)
-		os.Exit(2)
+		fail(nil, "error url or grpc method is not passed")
 	}
 	parts := strings.SplitN(*grpcMethod, "/", 2)
 	if len(parts) != 2 {
-		fmt.Fprint(os.Stderr, "error invalid grpc method name")
+		fail(nil, "error invalid grpc method name")
 	}
 	serviceName := parts[0]
 	methodName := parts[1]
@@ -78,7 +74,7 @@ func main() {
 		grpcClient, err = grpcake.NewGrpcClientFromReflection(ctx, *url)
 	}
 	if err != nil {
-		log.Fatalf("error creating grpc client: %v", err)
+		fail(err, "error creating grpc client")
 	}
 
 	// send request
@@ -86,18 +82,18 @@ func main() {
 	defer cancel()
 	resProtoMsg, err := grpcClient.Send(timeoutCtx, serviceName, methodName, jsonBody)
 	if err != nil {
-		log.Fatalf("error sending grpc request: %v", err)
+		fail(err, "error sending grpc request")
 	}
 
 	// convert proto msg response to bytes of json
 	resMsgJSON, err := protojson.Marshal(resProtoMsg)
 	if err != nil {
-		log.Fatalf("error printing response message as JSON: %v", err)
+		fail(err, "error printing response message as JSON")
 	}
 
 	prettyResponse, err := JSONPrettify(resMsgJSON)
 	if err != nil {
-		log.Fatalf("error prettify-ing response json: %v", err)
+		fail(err, "error prettify-ing response json")
 	}
 	fmt.Printf("Response:\n%s\n", prettyResponse)
 }
@@ -140,4 +136,20 @@ func JSONPrettify(jsonBytes []byte) (string, error) {
 	}
 
 	return prettifiedJSON.String(), nil
+}
+
+func fail(err error, msg string, args ...interface{}) {
+	if err != nil {
+		msg += ": %v"
+		args = append(args, err)
+	}
+	fmt.Fprintf(os.Stderr, msg, args...)
+	fmt.Fprintln(os.Stderr)
+	if err != nil {
+		os.Exit(1)
+	} else {
+		// nil error means it was CLI usage issue
+		fmt.Fprintf(os.Stderr, "Try '%s -help' for more details.\n", os.Args[0])
+		os.Exit(2)
+	}
 }
