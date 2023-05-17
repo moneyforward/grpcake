@@ -146,6 +146,16 @@ func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody
 
 // getServiceDescriptorByFqnName finds a service descriptor given a set of file descriptors.
 func getServiceDescriptorByFqnName(fileDescriptors linker.Files, serviceName protoreflect.FullName) protoreflect.ServiceDescriptor {
+	for _, descriptor := range fileDescriptors {
+		svcDescriptors := descriptor.Services()
+		for i := 0; i < svcDescriptors.Len(); i++ {
+			serviceDescriptor := svcDescriptors.Get(i)
+			if serviceDescriptor.FullName() == serviceName {
+				return serviceDescriptor
+			}
+		}
+	}
+
 	return nil
 }
 
