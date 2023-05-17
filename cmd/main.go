@@ -181,6 +181,16 @@ func (g GrpcClient) invokeRPC(ctx context.Context, method protoreflect.MethodDes
 
 // checkMessageType checks if a given proto message fit with the given protoreflect.MessageDescriptor.
 func checkMessageType(md protoreflect.MessageDescriptor, msg proto.Message) error {
+	expectedMessageDescriptorFullName := md.FullName()
+	givenMessageDescriptorFullName := msg.ProtoReflect().Descriptor().FullName()
+	if expectedMessageDescriptorFullName != givenMessageDescriptorFullName {
+		return fmt.Errorf(
+			"error wrong message type: expecting %s, got %s",
+			expectedMessageDescriptorFullName,
+			givenMessageDescriptorFullName,
+		)
+	}
+
 	return nil
 }
 
