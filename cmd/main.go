@@ -202,7 +202,15 @@ func requestMethod(md protoreflect.MethodDescriptor) string {
 // methodType returns a string to specify whether a method
 // is unary, client streaming, server streaming or bidirectional streaming.
 func methodType(md protoreflect.MethodDescriptor) string {
-	return ""
+	if md.IsStreamingClient() && md.IsStreamingServer() {
+		return "bidi-streaming"
+	} else if md.IsStreamingClient() {
+		return "client-streaming"
+	} else if md.IsStreamingServer() {
+		return "server-streaming"
+	} else {
+		return "unary"
+	}
 }
 
 // parseJSONFieldArg Parse JSON field arguments into a json string.
