@@ -24,11 +24,13 @@ type fileSource struct {
 	files linker.Files
 }
 
-func DescriptorSourceFromProtoFiles(ctx context.Context, fileNames ...string) (DescriptorSource, error) {
+func DescriptorSourceFromProtoFiles(ctx context.Context, protoFiles, importPaths []string) (DescriptorSource, error) {
 	compiler := protocompile.Compiler{
-		Resolver: protocompile.WithStandardImports(&protocompile.SourceResolver{}),
+		Resolver: protocompile.WithStandardImports(&protocompile.SourceResolver{
+			ImportPaths: importPaths,
+		}),
 	}
-	files, err := compiler.Compile(ctx, fileNames...)
+	files, err := compiler.Compile(ctx, protoFiles...)
 	if err != nil {
 		return nil, err
 	}
