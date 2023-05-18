@@ -1,6 +1,6 @@
 # Hands on proto reflect v2
 
-*TODO: find explaination for all the "explain ..." parts*
+_TODO: find explaination for all the "explain ..." parts_
 
 ## Intro
 
@@ -14,7 +14,7 @@
 
 ## PART I: Import single proto file
 
-### Init
+### Starting point
 
 We will start from commit [7175b14](https://github.com/moneyforward/grpcake/tree/7175b14fa588d7b80e8c4662068b1e738b7189c2).
 
@@ -33,41 +33,41 @@ It only has the gRPC service for testing.
 package main
 
 import (
-	"flag"
-	"fmt"
-	"os"
-	"strings"
+ "flag"
+ "fmt"
+ "os"
+ "strings"
 )
 
 func main() {
-	var (
-		grpcMethod = flag.String("grpc-method", "", "GRPC Method")
-	)
+ var (
+  grpcMethod = flag.String("grpc-method", "", "GRPC Method")
+ )
 
-	flag.Parse()
+ flag.Parse()
 
-	// parse the request body from non-flag arguments
-	jsonBody := parseJSONFieldArg(flag.Args())
+ // parse the request body from non-flag arguments
+ jsonBody := parseJSONFieldArg(flag.Args())
 
-	fmt.Printf("request json body:\n %s\n", jsonBody)
+ fmt.Printf("request json body:\n %s\n", jsonBody)
 
-	parts := strings.SplitN(*grpcMethod, "/", 2)
-	if len(parts) != 2 {
-		fmt.Fprint(os.Stderr, "error invalid grpc method name")
-	}
+ parts := strings.SplitN(*grpcMethod, "/", 2)
+ if len(parts) != 2 {
+  fmt.Fprint(os.Stderr, "error invalid grpc method name")
+ }
 
-	serviceName := parts[0]
-	methodName := parts[1]
+ serviceName := parts[0]
+ methodName := parts[1]
 
-	fmt.Printf("service: %s \nmethod: %s\n", serviceName, methodName)
+ fmt.Printf("service: %s \nmethod: %s\n", serviceName, methodName)
 
-	// construct client
-	// make request
-	// print response
+ // construct client
+ // make request
+ // print response
 }
 
 func parseJSONFieldArg(args []string) string {
-	return ""
+ return ""
 }
 ```
 
@@ -75,36 +75,36 @@ func parseJSONFieldArg(args []string) string {
 
 - Explain the idea behind `=` and `:=`.
 - Explain the differences between functions is `tidwall/sjson` we will use
-  - `SetRaw` 
+  - `SetRaw`
   - `Set`
 
 ```go
 func parseJSONFieldArg(args []string) (jsonString string, err error) {
-	jsonString = "{}"
+ jsonString = "{}"
 
-	var parts []string
-	for _, arg := range args {
-		parts = strings.SplitN(arg, ":=", 2)
-		if len(parts) == 2 {
-			jsonString, err = sjson.SetRaw(jsonString, parts[0], parts[1])
-			if err != nil {
-				return "", fmt.Errorf("error setting raw key value for json (%v, %v): %v", parts[0], parts[1], err)
-			}
-			continue
-		}
+ var parts []string
+ for _, arg := range args {
+  parts = strings.SplitN(arg, ":=", 2)
+  if len(parts) == 2 {
+   jsonString, err = sjson.SetRaw(jsonString, parts[0], parts[1])
+   if err != nil {
+    return "", fmt.Errorf("error setting raw key value for json (%v, %v): %v", parts[0], parts[1], err)
+   }
+   continue
+  }
 
-		parts = strings.SplitN(arg, "=", 2)
-		if len(parts) < 2 {
-			return "", fmt.Errorf("error invalid format for arg '%v'", arg)
-		}
+  parts = strings.SplitN(arg, "=", 2)
+  if len(parts) < 2 {
+   return "", fmt.Errorf("error invalid format for arg '%v'", arg)
+  }
 
-		jsonString, err = sjson.Set(jsonString, parts[0], parts[1])
-		if err != nil {
-			return "", fmt.Errorf("error setting key value for json (%v, %v): %v", parts[0], parts[1], err)
-		}
-	}
+  jsonString, err = sjson.Set(jsonString, parts[0], parts[1])
+  if err != nil {
+   return "", fmt.Errorf("error setting key value for json (%v, %v): %v", parts[0], parts[1], err)
+  }
+ }
 
-	return jsonString, nil
+ return jsonString, nil
 }
 ```
 
@@ -113,7 +113,6 @@ Update imports with (the editor should do it on save)
 ```go
 import "github.com/tidwall/sjson"
 ```
-
 
 ### Get service URL
 
@@ -130,39 +129,37 @@ import "github.com/tidwall/sjson"
 - add flag for reading one proto file
 - if not set exit
 
-### 1b7330b Construct client
+### Construct client
+
+[1b7330b](https://github.com/moneyforward/grpcake/commit/1b7330bd485b19c948ef7e6da0a71a83a2281b6c)
 
 - update the part under the comment that says construct client
 - add the `GrpcClient` struct
   - introduce the `protocompile` package
-  - explain what is `linker.Files` 
+  - explain what is `linker.Files`
   - explain what is `grpc.ClientConnInterface`
 - add the definition of `NewGrpcClientFromProtoFiles`
-
 
 ```go
 func main() {
    . . .
    // construct client
-	grpcClient, err := NewGrpcClientFromProtoFiles(ctx, *url, *proto)
-	if err != nil {
-		log.Fatalf("error creating grpc client: %v", err)
-	}
+ grpcClient, err := NewGrpcClientFromProtoFiles(ctx, *url, *proto)
+ if err != nil {
+  log.Fatalf("error creating grpc client: %v", err)
+ }
 }
 
 // GrpcClient invokes grpc method on a remote server dynamically, without the need for
 // protobuf code generation.
 type GrpcClient struct {
-	fileDescriptors linker.Files
-	client          grpc.ClientConnInterface
+ fileDescriptors linker.Files
+ client          grpc.ClientConnInterface
 }
 
-func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFilePath string) (*GrpcClient, error) {
-	return &GrpcClient{nil, nil}, nil
+ return &GrpcClient{nil, nil}, nil
 }
 ```
-
-
 
 ### Implement helper for constructing client
 
@@ -173,25 +170,24 @@ func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFilePath 
 
 ```go
 func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFilePath string) (*GrpcClient, error) {
-	return &GrpcClient{nil, nil}, nil
-	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to grpc server: %v", err)
-	}
+ return &GrpcClient{nil, nil}, nil
+ conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+ if err != nil {
+  return nil, fmt.Errorf("error connecting to grpc server: %v", err)
+ }
 
-	compiler := protocompile.Compiler{
-		Resolver: protocompile.WithStandardImports(&protocompile.SourceResolver{}),
-	}
+ compiler := protocompile.Compiler{
+  Resolver: protocompile.WithStandardImports(&protocompile.SourceResolver{}),
+ }
 
-	files, err := compiler.Compile(ctx, protoFilePath)
-	if err != nil {
-		return nil, err
-	}
+ files, err := compiler.Compile(ctx, protoFilePath)
+ if err != nil {
+  return nil, err
+ }
 
-	return &GrpcClient{fileDescriptors: files, client: conn}, nil
+ return &GrpcClient{fileDescriptors: files, client: conn}, nil
 }
 ```
-
 
 ### Send request and print converted response
 
@@ -201,29 +197,29 @@ func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFilePath 
 
 ```go
 func main() {
-	...
-	// send request
-	timeoutCtx, cancel := context.WithTimeout(ctx, DefaultTimeout)
-	defer cancel()
-	resProtoMsg, err := grpcClient.Send(timeoutCtx, serviceName, methodName, jsonBody)
-	if err != nil {
-		log.Fatalf("error sending grpc request: %v", err)
-	}
+ ...
+ // send request
+ timeoutCtx, cancel := context.WithTimeout(ctx, DefaultTimeout)
+ defer cancel()
+ resProtoMsg, err := grpcClient.Send(timeoutCtx, serviceName, methodName, jsonBody)
+ if err != nil {
+  log.Fatalf("error sending grpc request: %v", err)
+ }
 
-	// convert proto msg response to bytes of json
-	resMsgJSON, err := protojson.Marshal(resProtoMsg)
-	if err != nil {
-		log.Fatalf("error printing response message as JSON: %v", err)
-	}
+ // convert proto msg response to bytes of json
+ resMsgJSON, err := protojson.Marshal(resProtoMsg)
+ if err != nil {
+  log.Fatalf("error printing response message as JSON: %v", err)
+ }
 
-	fmt.Printf("Response:\n%s", resMsgJSON)
+ fmt.Printf("Response:\n%s", resMsgJSON)
 ```
 
 - add definition `GrpcClient.Send`
 
 ```go
 func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody string) (proto.Message, error) {
-	return nil, nil
+ return nil, nil
 }
 ```
 
@@ -237,11 +233,11 @@ func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody
 
 ```go
 func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody string) (proto.Message, error) {
-	return nil, nil
-	// get service descriptor from file descriptors
-	// get method descriptor from service descriptor
-	// create the proto msg
-	// invoke the RPC method with the created msg
+ return nil, nil
+ // get service descriptor from file descriptors
+ // get method descriptor from service descriptor
+ // create the proto msg
+ // invoke the RPC method with the created msg
 }
 ```
 
@@ -254,32 +250,32 @@ func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody
 
 ```go
 func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody string) (proto.Message, error) {
-	// get service descriptor
-	serviceDescriptor := getServiceDescriptorByFqnName(g.fileDescriptors, protoreflect.FullName(serviceName))
-	if serviceDescriptor == nil {
-		return nil, fmt.Errorf("error finding service with name %s", serviceName)
-	}
+ // get service descriptor
+ serviceDescriptor := getServiceDescriptorByFqnName(g.fileDescriptors, protoreflect.FullName(serviceName))
+ if serviceDescriptor == nil {
+  return nil, fmt.Errorf("error finding service with name %s", serviceName)
+ }
 
-	// get method descriptor
-	methodDescriptor := serviceDescriptor.Methods().ByName(protoreflect.Name(methodName))
-	if methodDescriptor == nil {
-		return nil, fmt.Errorf("error finding method with name %s", methodName)
-	}
+ // get method descriptor
+ methodDescriptor := serviceDescriptor.Methods().ByName(protoreflect.Name(methodName))
+ if methodDescriptor == nil {
+  return nil, fmt.Errorf("error finding method with name %s", methodName)
+ }
 
-	// create the proto msg
-	reqMsg := dynamicpb.NewMessage(methodDescriptor.Input())
-	err := protojson.Unmarshal([]byte(jsonBody), reqMsg)
-	if err != nil {
-		return nil, fmt.Errorf("error unmarshalling json body to protobuf message: %v", err)
-	}
+ // create the proto msg
+ reqMsg := dynamicpb.NewMessage(methodDescriptor.Input())
+ err := protojson.Unmarshal([]byte(jsonBody), reqMsg)
+ if err != nil {
+  return nil, fmt.Errorf("error unmarshalling json body to protobuf message: %v", err)
+ }
 
-	// invoke the RPC method with the created msg
-	resMsg, err := g.invokeRPC(ctx, methodDescriptor, reqMsg)
-	if err != nil {
-		return nil, fmt.Errorf("error sending grpc request: %v", err)
-	}
+ // invoke the RPC method with the created msg
+ resMsg, err := g.invokeRPC(ctx, methodDescriptor, reqMsg)
+ if err != nil {
+  return nil, fmt.Errorf("error sending grpc request: %v", err)
+ }
 
-	return resMsg, nil
+ return resMsg, nil
 }
 ```
 
@@ -288,12 +284,12 @@ func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody
 ```go
 // getServiceDescriptorByFqnName finds a service descriptor given a set of file descriptors.
 func getServiceDescriptorByFqnName(fileDescriptors linker.Files, serviceName protoreflect.FullName) protoreflect.ServiceDescriptor {
-	return nil
+ return nil
 }
 
 // invokeRPC calls unary RPC methods on the server.
 func (g GrpcClient) invokeRPC(ctx context.Context, method protoreflect.MethodDescriptor, request proto.Message, opts ...grpc.CallOption) (proto.Message, error) {
-	return nil, nil
+ return nil, nil
 }
 ```
 
@@ -304,16 +300,16 @@ func (g GrpcClient) invokeRPC(ctx context.Context, method protoreflect.MethodDes
 ```go
 // getServiceDescriptorByFqnName finds a service descriptor given a set of file descriptors.
 func getServiceDescriptorByFqnName(fileDescriptors linker.Files, serviceName protoreflect.FullName) protoreflect.ServiceDescriptor {
-	for _, descriptor := range fileDescriptors {
-		svcDescriptors := descriptor.Services()
-		for i := 0; i < svcDescriptors.Len(); i++ {
-			serviceDescriptor := svcDescriptors.Get(i)
-			if serviceDescriptor.FullName() == serviceName {
-				return serviceDescriptor
-			}
-		}
-	}
-	return nil
+ for _, descriptor := range fileDescriptors {
+  svcDescriptors := descriptor.Services()
+  for i := 0; i < svcDescriptors.Len(); i++ {
+   serviceDescriptor := svcDescriptors.Get(i)
+   if serviceDescriptor.FullName() == serviceName {
+    return serviceDescriptor
+   }
+  }
+ }
+ return nil
 }
 ```
 
@@ -324,39 +320,39 @@ func getServiceDescriptorByFqnName(fileDescriptors linker.Files, serviceName pro
 ```go
 // invokeRPC calls unary RPC methods on the server.
 func (g GrpcClient) invokeRPC(ctx context.Context, method protoreflect.MethodDescriptor, request proto.Message, opts ...grpc.CallOption) (proto.Message, error) {
-	return nil, nil
-	// check msg type to make sure it matches what the method expects
-	// make the gRPC call
+ return nil, nil
+ // check msg type to make sure it matches what the method expects
+ // make the gRPC call
 }
 ```
 
 ### Implement body of invokeRPC and add declaration of helpers
 
 [351e84d](https://github.com/moneyforward/grpcake/commit/351e84d8a1e77c3a85ec8b676bf9503897b69699)
- 
+
 - add body of `invokeRPC`
 - stress the fact that `dynamicpb.NewMessage` is used for receiving the response of the gRPC call
 
 ```go
 // invokeRPC calls unary RPC methods on the server.
 func (g GrpcClient) invokeRPC(ctx context.Context, method protoreflect.MethodDescriptor, request proto.Message, opts ...grpc.CallOption) (proto.Message, error) {
-	return nil, nil
-	if method.IsStreamingClient() || method.IsStreamingServer() {
-		return nil, fmt.Errorf("InvokeRpc is for unary methods; %q is %s", method.FullName(), methodType(method))
-	}
+ return nil, nil
+ if method.IsStreamingClient() || method.IsStreamingServer() {
+  return nil, fmt.Errorf("InvokeRpc is for unary methods; %q is %s", method.FullName(), methodType(method))
+ }
 
-	// check msg type to make sure it matches what the method expects
-	if err := checkMessageType(method.Input(), request); err != nil {
-		return nil, fmt.Errorf("error checking message type: %v", err)
-	}
+ // check msg type to make sure it matches what the method expects
+ if err := checkMessageType(method.Input(), request); err != nil {
+  return nil, fmt.Errorf("error checking message type: %v", err)
+ }
 
-	// make the gRPC call
-	resp := dynamicpb.NewMessage(method.Output())
-	if err := g.client.Invoke(ctx, requestMethod(method), request, resp, opts...); err != nil {
-		return nil, fmt.Errorf("error invoking rpc method: %v", err)
-	}
+ // make the gRPC call
+ resp := dynamicpb.NewMessage(method.Output())
+ if err := g.client.Invoke(ctx, requestMethod(method), request, resp, opts...); err != nil {
+  return nil, fmt.Errorf("error invoking rpc method: %v", err)
+ }
 
-	return resp, nil
+ return resp, nil
 }
 ```
 
@@ -365,18 +361,18 @@ func (g GrpcClient) invokeRPC(ctx context.Context, method protoreflect.MethodDes
 ```go
 // checkMessageType checks if a given proto message fit with the given protoreflect.MessageDescriptor.
 func checkMessageType(md protoreflect.MessageDescriptor, msg proto.Message) error {
-	return nil
+ return nil
 }
 
 // requestMethod generate method name string for invoking rpc methods.
 func requestMethod(md protoreflect.MethodDescriptor) string {
-	return ""
+ return ""
 }
 
 // methodType returns a string to specify whether a method
 // is unary, client streaming, server streaming or bidirectional streaming.
 func methodType(md protoreflect.MethodDescriptor) string {
-	return ""
+ return ""
 }
 ```
 
@@ -389,17 +385,17 @@ func methodType(md protoreflect.MethodDescriptor) string {
 ```go
 // checkMessageType checks if a given proto message fit with the given protoreflect.MessageDescriptor.
 func checkMessageType(md protoreflect.MessageDescriptor, msg proto.Message) error {
-	expectedMessageDescriptorFullName := md.FullName()
-	givenMessageDescriptorFullName := msg.ProtoReflect().Descriptor().FullName()
-	if expectedMessageDescriptorFullName != givenMessageDescriptorFullName {
-		return fmt.Errorf(
-			"error wrong message type: expecting %s, got %s",
-			expectedMessageDescriptorFullName,
-			givenMessageDescriptorFullName,
-		)
-	}
+ expectedMessageDescriptorFullName := md.FullName()
+ givenMessageDescriptorFullName := msg.ProtoReflect().Descriptor().FullName()
+ if expectedMessageDescriptorFullName != givenMessageDescriptorFullName {
+  return fmt.Errorf(
+   "error wrong message type: expecting %s, got %s",
+   expectedMessageDescriptorFullName,
+   givenMessageDescriptorFullName,
+  )
+ }
 
-	return nil
+ return nil
 }
 ```
 
@@ -410,8 +406,8 @@ func checkMessageType(md protoreflect.MessageDescriptor, msg proto.Message) erro
 ```go
 // requestMethod generate method name string for invoking rpc methods.
 func requestMethod(md protoreflect.MethodDescriptor) string {
-	return ""
-	return fmt.Sprintf("/%s/%s", md.Parent().FullName(), md.Name())
+ return ""
+ return fmt.Sprintf("/%s/%s", md.Parent().FullName(), md.Name())
 }
 ```
 
@@ -421,27 +417,31 @@ func requestMethod(md protoreflect.MethodDescriptor) string {
 
 ```go
 func methodType(md protoreflect.MethodDescriptor) string {
-	return ""
-	if md.IsStreamingClient() && md.IsStreamingServer() {
-		return "bidi-streaming"
-	} else if md.IsStreamingClient() {
-		return "client-streaming"
-	} else if md.IsStreamingServer() {
-		return "server-streaming"
-	} else {
-		return "unary"
-	}
+ return ""
+ if md.IsStreamingClient() && md.IsStreamingServer() {
+  return "bidi-streaming"
+ } else if md.IsStreamingClient() {
+  return "client-streaming"
+ } else if md.IsStreamingServer() {
+  return "server-streaming"
+ } else {
+  return "unary"
+ }
 }
 ```
 
 ### Time to Try
 
-```
+```sh
  $  go run cmd/main.go -url localhost:6069 \
     -grpc-method foo.ExampleService/UnaryExample \
     -proto internal/testing/proto/foo/example.proto \
     long_field:=10 string_field="hello world"
+```
 
+expected
+
+```text
  request json body:
   {"long_field":10,"string_field":"hello world"}
   service: foo.ExampleService
@@ -465,44 +465,45 @@ func methodType(md protoreflect.MethodDescriptor) string {
 
 ### Fall back to reflection when proto file is not passed
 
-[d9c780e](https://github.com/moneyforward/grpcake/commit/d9c780e16826dfe720526ef12a7d8b6622c1525a) 
+[d9c780e](https://github.com/moneyforward/grpcake/commit/d9c780e16826dfe720526ef12a7d8b6622c1525a)
 
 - In the function `main` in `cmd/main.go` remove this `if` block
 
-  ```
+  ```go
   func main() {
-  	...
-  	if *proto == "" {
-  		fmt.Fprint(os.Stderr, "error proto file is not passed")
-  		fmt.Fprintln(os.Stderr)
-  		os.Exit(2)
-  	}
-  	...
+   ...
+   if *proto == "" {
+    fmt.Fprint(os.Stderr, "error proto file is not passed")
+    fmt.Fprintln(os.Stderr)
+    os.Exit(2)
+   }
+   ...
   }
   ```
 
-- then replace the line 
+- then replace the line
 
   ```go
-  	grpcClient, err := grpcake.NewGrpcClientFromProtoFiles(ctx, *url, *proto)
+   grpcClient, err := grpcake.NewGrpcClientFromProtoFiles(ctx, *url, *proto)
   ```
 
-  with 
+  with
+
   ```go
-	grpcClient, err := grpcake.NewGrpcClientFromProtoFiles(ctx, *url, *proto)
-	var grpcClient *grpcake.GrpcClient
-	if *proto != "" {
-		// if proto file is given use it
-		grpcClient, err = grpcake.NewGrpcClientFromProtoFiles(ctx, *url, *proto)
-	} else {
-		// otherwise, use reflection
-		grpcClient, err = grpcake.NewGrpcClientFromReflection(ctx, *url)
-	}
-	if err != nil {
-		log.Fatalf("error creating grpc client: %v", err)
-	}
+  grpcClient, err := grpcake.NewGrpcClientFromProtoFiles(ctx, *url, *proto)
+  var grpcClient *grpcake.GrpcClient
+  if *proto != "" {
+   // if proto file is given use it
+   grpcClient, err = grpcake.NewGrpcClientFromProtoFiles(ctx, *url, *proto)
+  } else {
+   // otherwise, use reflection
+   grpcClient, err = grpcake.NewGrpcClientFromReflection(ctx, *url)
+  }
+  if err != nil {
+   log.Fatalf("error creating grpc client: %v", err)
+  }
   ```
-  
+
 ### Refactor by introducing DescriptorSource
 
 [a292f6c](https://github.com/moneyforward/grpcake/commit/a292f6cdac8cf8ad041be665986669c7e543548d)
@@ -513,8 +514,8 @@ func methodType(md protoreflect.MethodDescriptor) string {
 
 ```go
 type GrpcClient struct {
-	descriptorSource DescriptorSource
-	client           grpc.ClientConnInterface
+ descriptorSource DescriptorSource
+ client           grpc.ClientConnInterface
 }
 ```
 
@@ -525,8 +526,8 @@ type GrpcClient struct {
 // DescriptorSource is a source of protobuf descriptor information. It can be backed by a FileDescriptorSet
 // proto (like a file generated by protoc) or a remote server that supports the reflection API.
 type DescriptorSource interface {
-	// FindSymbol returns a descriptor for the given fully-qualified symbol name.
-	FindServiceDescriptor(fullyQualifiedName string) (protoreflect.ServiceDescriptor, error)
+ // FindSymbol returns a descriptor for the given fully-qualified symbol name.
+ FindServiceDescriptor(fullyQualifiedName string) (protoreflect.ServiceDescriptor, error)
 }
 ```
 
@@ -534,12 +535,12 @@ type DescriptorSource interface {
 
 ```go
 func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody string) (proto.Message, error) {
-	// get service descriptor
-	serviceDescriptor, err := g.descriptorSource.FindServiceDescriptor(serviceName)
-	if err != nil {
-		return nil, fmt.Errorf("error finding service with name %s: %v", serviceName, err)
-	}
-	...
+ // get service descriptor
+ serviceDescriptor, err := g.descriptorSource.FindServiceDescriptor(serviceName)
+ if err != nil {
+  return nil, fmt.Errorf("error finding service with name %s: %v", serviceName, err)
+ }
+ ...
 }
 ```
 
@@ -547,7 +548,7 @@ func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody
 
 ```go
 type fileSource struct {
-	files linker.Files
+ files linker.Files
 }
 ```
 
@@ -557,17 +558,17 @@ type fileSource struct {
 ```go
 // FindServiceDescriptor implements DescriptorSource
 func (fs fileSource) FindServiceDescriptor(fullyQualifiedName string) (protoreflect.ServiceDescriptor, error) {
-	for _, descriptor := range fs.files {
-		svcDescriptors := descriptor.Services()
-		for i := 0; i < svcDescriptors.Len(); i++ {
-			serviceDescriptor := svcDescriptors.Get(i)
-			if serviceDescriptor.FullName() == protoreflect.FullName(fullyQualifiedName) {
-				return serviceDescriptor, nil
-			}
-		}
-	}
+ for _, descriptor := range fs.files {
+  svcDescriptors := descriptor.Services()
+  for i := 0; i < svcDescriptors.Len(); i++ {
+   serviceDescriptor := svcDescriptors.Get(i)
+   if serviceDescriptor.FullName() == protoreflect.FullName(fullyQualifiedName) {
+    return serviceDescriptor, nil
+   }
+  }
+ }
 
-	return nil, fmt.Errorf("error finding service with name %s", fullyQualifiedName)
+ return nil, fmt.Errorf("error finding service with name %s", fullyQualifiedName)
 }
 ```
 
@@ -575,14 +576,14 @@ func (fs fileSource) FindServiceDescriptor(fullyQualifiedName string) (protorefl
 
 ```go
 func DescriptorSourceFromProtoFiles(ctx context.Context, fileNames ...string) (DescriptorSource, error) {
-	compiler := protocompile.Compiler{
-		Resolver: protocompile.WithStandardImports(&protocompile.SourceResolver{}),
-	}
-	files, err := compiler.Compile(ctx, fileNames...)
-	if err != nil {
-		return nil, err
-	}
-	return fileSource{files: files}, nil
+ compiler := protocompile.Compiler{
+  Resolver: protocompile.WithStandardImports(&protocompile.SourceResolver{}),
+ }
+ files, err := compiler.Compile(ctx, fileNames...)
+ if err != nil {
+  return nil, err
+ }
+ return fileSource{files: files}, nil
 }
 ```
 
@@ -590,17 +591,17 @@ func DescriptorSourceFromProtoFiles(ctx context.Context, fileNames ...string) (D
 
 ```go
 func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFilePath string) (*GrpcClient, error) {
-	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to grpc server: %v", err)
-	}
+ conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+ if err != nil {
+  return nil, fmt.Errorf("error connecting to grpc server: %v", err)
+ }
 
-	fileSource, err := DescriptorSourceFromProtoFiles(ctx, protoFilePath)
-	if err != nil {
-		return nil, err
-	}
+ fileSource, err := DescriptorSourceFromProtoFiles(ctx, protoFilePath)
+ if err != nil {
+  return nil, err
+ }
 
-	return &GrpcClient{descriptorSource: fileSource, client: conn}, nil
+ return &GrpcClient{descriptorSource: fileSource, client: conn}, nil
 }
 ```
 
@@ -618,7 +619,7 @@ func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFilePath 
 
 ```go
 type serverSource struct {
-	client *grpcreflect.Client
+ client *grpcreflect.Client
 }
 ```
 
@@ -626,14 +627,14 @@ type serverSource struct {
 
 ```go
 func (ss serverSource) FindServiceDescriptor(fullyQualifiedName string) (protoreflect.ServiceDescriptor, error) {
-	sd, err := ss.client.ResolveService(fullyQualifiedName)
-	if err != nil {
-		if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unimplemented {
-			return nil, errors.New("server does not support the reflection API")
-		}
-		return nil, err
-	}
-	return sd.UnwrapService(), nil
+ sd, err := ss.client.ResolveService(fullyQualifiedName)
+ if err != nil {
+  if stat, ok := status.FromError(err); ok && stat.Code() == codes.Unimplemented {
+   return nil, errors.New("server does not support the reflection API")
+  }
+  return nil, err
+ }
+ return sd.UnwrapService(), nil
 }
 ```
 
@@ -645,7 +646,7 @@ func (ss serverSource) FindServiceDescriptor(fullyQualifiedName string) (protore
 // to interrogate a server for descriptor information. If the server does not support the reflection
 // API then the various DescriptorSource methods will return ErrReflectionNotSupported
 func DescriptorSourceFromServer(_ context.Context, refClient *grpcreflect.Client) DescriptorSource {
-	return serverSource{client: refClient}
+ return serverSource{client: refClient}
 }
 ```
 
@@ -653,27 +654,26 @@ func DescriptorSourceFromServer(_ context.Context, refClient *grpcreflect.Client
 
 [0d8a704](https://github.com/moneyforward/grpcake/commit/0d8a70443942577206cec3b8bd8d35c700df5515)
 
-It was used in `cmd/main.go` to fall back on reflection 
-
+It was used in `cmd/main.go` to fall back on reflection
 
 - add this in `grpc_client.go`
 
 ```go
 // NewGrpcClientFromReflection returns a GrpcClient that queries the server for service descriptors.
 func NewGrpcClientFromReflection(ctx context.Context, url string) (*GrpcClient, error) {
-	conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to grpc server: %v", err)
-	}
+ conn, err := grpc.Dial(url, grpc.WithTransportCredentials(insecure.NewCredentials()))
+ if err != nil {
+  return nil, fmt.Errorf("error connecting to grpc server: %v", err)
+ }
 
-	refClient := grpcreflect.NewClientV1Alpha(ctx, reflectpb.NewServerReflectionClient(conn))
-	reflSource := DescriptorSourceFromServer(ctx, refClient)
-	descSource := reflSource
+ refClient := grpcreflect.NewClientV1Alpha(ctx, reflectpb.NewServerReflectionClient(conn))
+ reflSource := DescriptorSourceFromServer(ctx, refClient)
+ descSource := reflSource
 
-	return &GrpcClient{
-		descriptorSource: descSource,
-		client:           conn,
-	}, nil
+ return &GrpcClient{
+  descriptorSource: descSource,
+  client:           conn,
+ }, nil
 }
 ```
 
@@ -689,7 +689,9 @@ $ go run cmd/main.go -url localhost:6069 \
     -grpc-method foo.ExampleService/UnaryExample \
     long_field:=10 string_field="hello world"
 ```
+
 expected response
+
 ```
  request json body:
   {"long_field":10,"string_field":"hello world"}
@@ -707,7 +709,9 @@ $ go run cmd/main.go -url localhost:6069 \
     -grpc-method foo.ExampleService/UnaryExample \
     long_field:=10 string_field="hello world"
 ```
+
 expected response
+
 ```
 request json body:
   {"long_field":10,"string_field":"hello world"}
@@ -725,7 +729,6 @@ Response:
 - move everything related to `DescriptorSource` in a file named `desc_source.go`
 - no need update reference because they are still in the same package
 
-
 ## PART 3: Implement support for multiple proto files
 
 - explain that proto files will be read separated by comma `,` and import paths also.
@@ -733,7 +736,7 @@ Response:
 
 ### update main
 
-[ba0719a] 
+[ba0719a]
 
 - rename `proto      = flag.String("proto", "", "Proto files to import delimited by comma")` to `rawProtoFiles`
 - add flag `rawImportPaths      = flag.String("import-paths", "", "List of import paths delimited by comma")` to `rawProtoFiles`
@@ -742,125 +745,130 @@ The flag block in main should look like this
 
 ```go
 func main() {
-	var (
-		url            = flag.String("url", "", "GRPC Server URL")
-		grpcMethod     = flag.String("grpc-method", "", "GRPC Method")
-		rawProtoFiles  = flag.String("proto", "", "Proto files to import delimited by comma")
-		rawImportPaths = flag.String("import-paths", "", "List of import paths delimited by comma")
-	)
-	
-	flag.Parse()
-	...
+ var (
+  url            = flag.String("url", "", "GRPC Server URL")
+  grpcMethod     = flag.String("grpc-method", "", "GRPC Method")
+  rawProtoFiles  = flag.String("proto", "", "Proto files to import delimited by comma")
+  rawImportPaths = flag.String("import-paths", "", "List of import paths delimited by comma")
+ )
+
+ flag.Parse()
+ ...
 }
 ```
 
 - make lists of import paths and proto files
+
 ```go
 func main() {
-	...
-	flag.Parse()
+ ...
+ flag.Parse()
 
-	importPaths := make([]string, 0)
-	if *rawImportPaths != "" {
-		importPaths = strings.Split(*rawImportPaths, FilePathSeparator)
-	}
+ importPaths := make([]string, 0)
+ if *rawImportPaths != "" {
+  importPaths = strings.Split(*rawImportPaths, FilePathSeparator)
+ }
 
-	protoFiles := make([]string, 0)
-	if *rawProtoFiles != "" {
-		protoFiles = strings.Split(*rawProtoFiles, FilePathSeparator)
-	}
-	...
+ protoFiles := make([]string, 0)
+ if *rawProtoFiles != "" {
+  protoFiles = strings.Split(*rawProtoFiles, FilePathSeparator)
+ }
+ ...
 }
 ```
+
 - in the `if else` block where the client are generated, update the condition for generating from proto files
   and update the call to `grpcake.NewGrpcClientFromProtoFiles`
 
 ```go
 if len(protoFiles) > 0 {
-		// if proto files are given use them
-		grpcClient, err = grpcake.NewGrpcClientFromProtoFiles(ctx, *url, protoFiles, importPaths)
-	} else {
-		// otherwise, use reflection
-		...
-	}
+  // if proto files are given use them
+  grpcClient, err = grpcake.NewGrpcClientFromProtoFiles(ctx, *url, protoFiles, importPaths)
+ } else {
+  // otherwise, use reflection
+  ...
+ }
 ```
 
 ### update definition of NewGrpcClientFromProtoFiles
 
-[38d758c] 
+[38d758c]
 
-- in `grpc_client.go`, update the definition of `NewGrpcClientFromProtoFiles` 
-- in  the body of `NewGrpcClientFromProtoFiles` update the call to `DescriptorSourceFromProtoFiles`
+- in `grpc_client.go`, update the definition of `NewGrpcClientFromProtoFiles`
+- in the body of `NewGrpcClientFromProtoFiles` update the call to `DescriptorSourceFromProtoFiles`
 
 ```go
 func NewGrpcClientFromProtoFiles(ctx context.Context, url string, protoFiles, importPaths []string) (*GrpcClient, error) {
-	conn, err := dial(url)
-	if err != nil {
-		return nil, fmt.Errorf("error connecting to grpc server: %v", err)
-	}
+ conn, err := dial(url)
+ if err != nil {
+  return nil, fmt.Errorf("error connecting to grpc server: %v", err)
+ }
 
-	fileSource, err := DescriptorSourceFromProtoFiles(ctx, protoFiles, importPaths)
-	if err != nil {
-		return nil, err
-	}
-	return &GrpcClient{descriptorSource: fileSource, client: conn}, nil
+ fileSource, err := DescriptorSourceFromProtoFiles(ctx, protoFiles, importPaths)
+ if err != nil {
+  return nil, err
+ }
+ return &GrpcClient{descriptorSource: fileSource, client: conn}, nil
 }
 ```
 
 ### update definition of DescriptorSourceFromProtoFiles
 
-[7157aa0] 
+[7157aa0]
 
 - update the definition of `DescriptorSourceFromProtoFiles`
 
 ```go
 func DescriptorSourceFromProtoFiles(ctx context.Context, protoFiles, importPaths []string) (DescriptorSource, error) {
-	compiler := protocompile.Compiler{
-		Resolver: protocompile.WithStandardImports(&protocompile.SourceResolver{
-			ImportPaths: importPaths,
-		}),
-	}
-	files, err := compiler.Compile(ctx, protoFiles...)
-	if err != nil {
-		return nil, err
-	}
+ compiler := protocompile.Compiler{
+  Resolver: protocompile.WithStandardImports(&protocompile.SourceResolver{
+   ImportPaths: importPaths,
+  }),
+ }
+ files, err := compiler.Compile(ctx, protoFiles...)
+ if err != nil {
+  return nil, err
+ }
 ```
 
 ### Prettify JSON output (Optional)
 
-[db84cca] 
+[db84cca]
 
 - in `cmd/main.go` add
 
 ```go
 // JSONPrettify adds indent to raw json string.
 func JSONPrettify(jsonBytes []byte) (string, error) {
-	var prettifiedJSON bytes.Buffer
-	err := json.Indent(&prettifiedJSON, jsonBytes, "", "\t")
-	if err != nil {
-		return "", fmt.Errorf("error prettify-ing jsong string: %v", err)
-	}
+ var prettifiedJSON bytes.Buffer
+ err := json.Indent(&prettifiedJSON, jsonBytes, "", "\t")
+ if err != nil {
+  return "", fmt.Errorf("error prettify-ing jsong string: %v", err)
+ }
 
-	return prettifiedJSON.String(), nil
+ return prettifiedJSON.String(), nil
 }
 ```
 
-- replace the last line of the `main` function   
-  ```
-	fmt.Printf("Response:\n%s", resMsgJSON)
-  ```
-  with
+- replace the last line of the `main` function
+
   ```go
-  	prettyResponse, err := JSONPrettify(resMsgJSON)
-  	if err != nil {
-  		log.Fatalf("error prettify-ing response json: %v", err)
-  	}
-  	fmt.Printf("Response:\n%s\n", prettyResponse)
+  fmt.Printf("Response:\n%s", resMsgJSON)
+  ```
+
+  with
+
+  ```go
+   prettyResponse, err := JSONPrettify(resMsgJSON)
+   if err != nil {
+    log.Fatalf("error prettify-ing response json: %v", err)
+   }
+   fmt.Printf("Response:\n%s\n", prettyResponse)
   ```
 
 ### Time To Try
 
-```
+```sh
 $ make run-test-server
 $ go run cmd/main.go --url localhost:6069 \
   --grpc-method bar.TestService/UnaryExample \
@@ -868,13 +876,15 @@ $ go run cmd/main.go --url localhost:6069 \
   --proto bar/example.proto,foo/example.proto \
   int32Field:=1 basicTypes.intField:=2
 ```
+
 expected response
-```
-request json body: 
+
+```text
+request json body:
  {"int32Field":1,"basicTypes":{"intField":2}}
 service: bar.TestService
 method: UnaryExample
-Response: 
+Response:
 {
     "int32Field": 1,
     "basicTypes": {
