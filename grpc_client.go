@@ -7,6 +7,7 @@ import (
 	"github.com/jhump/protoreflect/grpcreflect"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
+	"google.golang.org/grpc/metadata"
 	reflectpb "google.golang.org/grpc/reflection/grpc_reflection_v1alpha"
 	"google.golang.org/protobuf/encoding/protojson"
 	"google.golang.org/protobuf/proto"
@@ -68,8 +69,8 @@ func NewGrpcClientFromProtoFiles(ctx context.Context, url string, importPaths, f
 	return NewGrpcClient(ctx, url, fileSource)
 }
 
-// Send ...
-func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody string) (proto.Message, error) {
+// InvokeRpc ...
+func (g *GrpcClient) InvokeRpc(ctx context.Context, serviceName, methodName, jsonBody string, rawHeaders map[string]string) (proto.Message, error) {
 	serviceDescriptor, err := g.descriptorSource.FindServiceDescriptor(serviceName)
 	if serviceDescriptor == nil || err != nil {
 		return nil, fmt.Errorf("error finding service with name %s: %s", serviceName, err)
@@ -87,8 +88,10 @@ func (g *GrpcClient) Send(ctx context.Context, serviceName, methodName, jsonBody
 		return nil, fmt.Errorf("error unmarshalling json body to protobuf message: %v", err)
 	}
 
-	// TODO:
-	resMsg, err := g.client.InvokeRpc(context.Background(), methodDescriptor, reqMsg)
+	headers := metadata.New(rawHeaders)
+	outgoingCtx := metadata.NewOutgoingContext(ctx, headers)
+
+	resMsg, err := g.client.InvokeRpc(outgoingCtx, methodDescriptor, reqMsg)
 	if err != nil {
 		return nil, fmt.Errorf("error sending grpc request: %v", err)
 	}
