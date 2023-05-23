@@ -1,0 +1,17 @@
+syntax = "proto3";
+
+package composite;
+option go_package = "github.com/moneyforward/grpcake/internal/testing/pb/composite";
+
+import "basic/example.proto";
+
+service CompositeService {
+  rpc UnaryExample(CompositeType) returns (CompositeType) {}
+}
+
+message CompositeType {
+  int32 int32_field = 1;
+  basic.BasicType basic_types = 2;
+}
+
+

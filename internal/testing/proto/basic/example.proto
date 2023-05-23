@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package basic;
+option go_package = "github.com/moneyforward/grpcake/internal/testing/pb/basic";
+
+message BasicType {
+  int32 int_field = 1;
+  int64 long_field = 2;
+  float float_field = 3;
+  double double_field = 4;
+  bool bool_field = 5;
+  string string_field = 6;
+  bytes bytes_field = 7;
+}
+
+service BasicService {
+  rpc UnaryExample(BasicType) returns (BasicType) {}
+}
