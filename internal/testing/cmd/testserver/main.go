@@ -2,7 +2,6 @@ package main
 
 import (
 	"context"
-	"flag"
 	"fmt"
 	"log"
 	"net"
@@ -16,10 +15,6 @@ import (
 )
 
 func main() {
-	reflection := flag.Bool("use-reflection", false, "Run server with reflection support")
-
-	flag.Parse()
-
 	port := 6069
 	lis, err := net.Listen("tcp", fmt.Sprintf("localhost:%d", port))
 	if err != nil {
@@ -31,10 +26,8 @@ func main() {
 	barpb.RegisterTestServiceServer(grpcServer, newBarServer())
 	bazpb.RegisterTestServiceServer(grpcServer, newBazServer())
 
-	if *reflection {
-		// Register reflection service on gRPC server.
-		grpcreflect.Register(grpcServer)
-	}
+	// Register reflection service on gRPC server.
+	grpcreflect.Register(grpcServer)
 
 	log.Printf("Service is running on localhost:%d", port)
 	err = grpcServer.Serve(lis)
