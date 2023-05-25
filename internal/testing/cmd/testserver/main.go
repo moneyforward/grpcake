@@ -70,7 +70,7 @@ func newCompositeServer() *compositeServer {
 	return &compositeServer{}
 }
 
-func (b *compositeServer) Greeting(ctx context.Context, pb *compositepb.CompositeType) (*compositepb.CompositeType, error) {
+func (b *compositeServer) UnaryExample(ctx context.Context, pb *compositepb.CompositeType) (*compositepb.CompositeType, error) {
 	return pb, nil
 }
 
