@@ -7,7 +7,6 @@ import (
 	"net"
 
 	"google.golang.org/grpc"
-	grpcreflect "google.golang.org/grpc/reflection"
 
 	advancedpb "github.com/moneyforward/grpcake/internal/testing/pb/advanced"
 	basicpb "github.com/moneyforward/grpcake/internal/testing/pb/basic"
@@ -27,9 +26,6 @@ func main() {
 	basicpb.RegisterBasicServiceServer(grpcServer, newBasicServer())
 	advancedpb.RegisterAdvancedServiceServer(grpcServer, newAdvancedServer())
 	compositepb.RegisterCompositeServiceServer(grpcServer, newCompositeServer())
-
-	// Register reflection service on gRPC server.
-	grpcreflect.Register(grpcServer)
 
 	log.Printf("Service is running on localhost:%d", port)
 	err = grpcServer.Serve(lis)
