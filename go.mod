@@ -3,12 +3,12 @@ module github.com/moneyforward/grpcake
 go 1.20
 
 require (
-	github.com/bufbuild/buf v1.17.0
+	github.com/bufbuild/buf v1.15.1
 	github.com/bufbuild/protocompile v0.5.1
 	github.com/golangci/golangci-lint v1.52.2
 	github.com/jhump/protoreflect v1.15.1
 	github.com/tidwall/sjson v1.2.5
-	google.golang.org/grpc v1.46.2
+	google.golang.org/grpc v1.53.0
 	google.golang.org/protobuf v1.30.0
 )
 
@@ -37,7 +37,7 @@ require (
 	github.com/breml/errchkjson v0.3.1 // indirect
 	github.com/bufbuild/connect-go v1.6.0 // indirect
 	github.com/butuzov/ireturn v0.1.1 // indirect
-	github.com/cespare/xxhash/v2 v2.1.2 // indirect
+	github.com/cespare/xxhash/v2 v2.2.0 // indirect
 	github.com/charithe/durationcheck v0.0.10 // indirect
 	github.com/chavacava/garif v0.0.0-20230227094218-b8c73b2037b8 // indirect
 	github.com/cpuguy83/go-md2man/v2 v2.0.2 // indirect
@@ -184,7 +184,6 @@ require (
 	github.com/t-yuki/gocover-cobertura v0.0.0-20180217150009-aaee18c8195c // indirect
 	github.com/tdakkota/asciicheck v0.2.0 // indirect
 	github.com/tetafro/godot v1.4.11 // indirect
-	github.com/tetratelabs/wazero v1.0.1 // indirect
 	github.com/tidwall/gjson v1.14.4 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
@@ -214,7 +213,7 @@ require (
 	golang.org/x/term v0.6.0 // indirect
 	golang.org/x/text v0.8.0 // indirect
 	golang.org/x/tools v0.7.0 // indirect
-	google.golang.org/genproto v0.0.0-20220519153652-3a47de7e79bd // indirect
+	google.golang.org/genproto v0.0.0-20230110181048-76db0878b65f // indirect
 	gopkg.in/ini.v1 v1.67.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
